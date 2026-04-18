@@ -1,0 +1,13 @@
+{
+  "app_title": "HomeNet - Network Guardian",
+  "login": "Login",
+  "dashboard": "Dashboard",
+  "hosts": "Hosts",
+  "traffic": "Traffic & Volume",
+  "block_rules": "Block Rules",
+  "system": "System Settings",
+  "speed_test": "Internet Speed",
+  "alerts": "Alerts",
+  "kids_block_active": "Kids Block: Active (23:00-00:00)",
+  "lang_switch": "العربية"
+}

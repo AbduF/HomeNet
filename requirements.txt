@@ -1,0 +1,7 @@
+customtkinter==5.2.2
+psutil==5.9.8
+scapy==2.5.0
+requests==2.31.0
+plyer==2.1.0
+PyYAML==6.0.1
+passlib[bcrypt]==1.7.4vv
