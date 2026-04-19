@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h1>🌐 HomeNet</h1>
+        <p class="subtitle">Parental Network Controller</p>
+        <p class="badge-uae">🇦🇪 UAE / Al Ain</p>
+        
+        <form id="loginForm" method="post">
+            <div class="form-group">
+                <label for="username">{{ i18n.get('username', 'Username') }}</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">{{ i18n.get('password', 'Password') }}</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                {{ i18n.get('login', 'Login') }}
+            </button>
+            
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </form>
+        
+        <div class="default-creds">
+            <small>Default: admin / 123456</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const response = await fetch('/login', {
+        method: 'POST',
+        body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+        window.location.href = '/dashboard';
+    } else {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = result.error;
+        errorDiv.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

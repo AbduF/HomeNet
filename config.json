@@ -14,8 +14,20 @@
     "alerts_enabled": true
   },
   "rules": [
-    {"name": "Gaming", "domains": ["epicgames.com", "steam.com", "xboxlive.com"], "action": "block"},
-    {"name": "Social Media", "domains": ["tiktok.com", "instagram.com", "snapchat.com"], "action": "block"},
-    {"name": "Streaming", "domains": ["netflix.com", "youtube.com", "twitch.tv"], "action": "block"}
+    {
+      "name": "Gaming",
+      "domains": ["epicgames.com", "steam.com", "xboxlive.com", "playstation.com"],
+      "action": "block"
+    },
+    {
+      "name": "Social Media",
+      "domains": ["tiktok.com", "instagram.com", "snapchat.com", "twitter.com"],
+      "action": "block"
+    },
+    {
+      "name": "Streaming",
+      "domains": ["netflix.com", "youtube.com", "twitch.tv", "spotify.com"],
+      "action": "block"
+    }
   ]
 }

@@ -1,4 +1,6 @@
 
+flask>=2.3.0
+werkzeug>=2.3.0
 customtkinter>=5.2.0
 psutil>=5.9.0
 speedtest-cli>=2.1.3
