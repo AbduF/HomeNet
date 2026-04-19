@@ -1,50 +1,52 @@
-\# HomeNet 🌐
+\# 🌐 HomeNet
 
-\*\*Linux Web-Based Parental Network Controller with time blocking, traffic monitoring \& bilingual UI. Proudly developed in UAE / Al Ain.\*\*
-
-
-
-!\[HomeNet Logo](static/logo.png)
+\*\*Parental Network Controller\*\* with time-based blocking, real-time traffic monitoring, and bilingual (EN/AR) UI.
 
 
 
-\## Features
+\## ✨ Features
 
-\- Block internet traffic by time (e.g., 11 PM–12 PM)
+\- ⏰ Schedule internet blocking (default: 11 PM – 12 AM)
 
-\- Monitor and block gaming, social media, and streaming traffic
+\- 📊 Monitor all hosts, OS/HW details, traffic volume
 
-\- Web-based admin dashboard (Dash + FastAPI)
+\- 🚫 Block gaming, social media, streaming via DNS/iptables
 
-\- System alerts for new hosts and high traffic
+\-  Arabic \& English interface
 
-\- Internet speed test and connection check
+\-  Built-in speed test \& connection checker
 
-
-
-\---
+\- 🔔 Alerts for new hosts \& high traffic
 
 
 
-\## Installation
-
-
-
-\### Prerequisites
-
-\- Linux (Ubuntu/Debian/Raspberry Pi OS)
-
-\- Python 3.8+
-
-\- Nginx (for production)
-
-
-
-\### Step 1: Clone the Repository
+\## 🛠️ Install
 
 ```bash
 
-git clone https://github.com/AbduF/HomeNet.git
+git clone https://github.com/AbduF/HomeNet
 
 cd HomeNet
+
+pip3 install -r requirements.txt
+
+python3 main.py
+
+
+
+📝 Default Credentials
+
+Username: admin
+
+Password: 123456
+
+
+
+&#x20;Proudly developed in UAE / Al Ain
+
+
+
+Support \& Feedback: abdalfaqeeh@gmail.com
+
+
 
