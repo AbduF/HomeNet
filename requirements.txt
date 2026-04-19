@@ -7,3 +7,6 @@ scapy
 psutil
 python-bidi
 jinja2
+python-multipart
+python-dotenv
+gunicorn
