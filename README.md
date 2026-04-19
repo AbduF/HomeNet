@@ -56,9 +56,199 @@ HomeNet is a powerful parental network control application that gives you full v
 
 \---
 
-
-
 \## ️ Network Diagram
+
+
+
+┌───────────┐ ┌──────────────────────────┐ ┌──────────────┐
+
+│ │ │ HomeNet Controller │ │ │
+
+│ Internet │─────►│ (Firewall + Monitoring) │◄────►│ LAN Devices │
+
+│ (WAN) │ │ 🛡️ Network Security │ │ 💻🖥️📺 │
+
+│ │ └──────────────────────────┘ └──────────────┘
+
+└───────────┘ │
+
+▼
+
+┌────────────────┐
+
+│ Managed Switch │
+
+│ 🔌🔌 │
+
+└────────────────┘
+
+
+
+
+
+⚡ 5-Minute Installation Guide
+
+For Raspberry Pi 3 / Linux PC
+
+Step
+
+Command
+
+Time
+
+1
+
+git clone https://github.com/AbduF/HomeNet.git \&\& cd HomeNet
+
+30s
+
+2
+
+sudo bash setup.sh
+
+2 min
+
+3
+
+sudo systemctl start homenetservice
+
+10s
+
+4
+
+homenet-gui or homenet-cli
+
+10s
+
+5
+
+Login: admin / 123456 → Change password immediately!
+
+30s
+
+Post-Install Configuration
+
+bash
+
+12345678910111213141516171819
+
+📋 GitHub Repository Setup
+
+Repository: AbduF/HomeNet
+
+Description:
+
+1
+
+Topics/Tags:
+
+1
+
+Push Steps
+
+bash
+
+12345678
+
+🎯 Key Features Summary
+
+Feature
+
+CLI Command
+
+GUI Location
+
+Network Scan
+
+scan
+
+Hosts → Scan Network
+
+View Hosts
+
+hosts
+
+Hosts page
+
+Block Host
+
+block 192.168.1.x
+
+Hosts → Block button
+
+Block Gaming
+
+block gaming
+
+Blocking → Gaming toggle
+
+Block Social
+
+block social
+
+Blocking → Social toggle
+
+Block Streaming
+
+block streaming
+
+Blocking → Streaming toggle
+
+Time Blocking
+
+timerules set 23:00 00:00
+
+Time Rules page
+
+Speed Test
+
+speedtest
+
+Speed Test page
+
+Traffic Monitor
+
+monitor start
+
+Traffic → Start Monitoring
+
+Alerts
+
+alerts
+
+Alerts page
+
+Change Password
+
+system change password
+
+System → Admin Settings
+
+Set Email
+
+settings email x@y.com
+
+System → Recovery Email
+
+🔒 Security Notes
+
+Change default password (123456) immediately after first login
+
+Set up a recovery email for password reset
+
+Run the service as root (required for iptables/firewall)
+
+Keep the Raspberry Pi in a secure location
+
+Regularly update via git pull
+
+
+
+
+
+
+
+
 
 
 
