@@ -1,195 +1,40 @@
-\# 🌐 HomeNet — Parental Network Controller
+\# HomeNet 🌐
 
+\*\*Parental Network Controller with time blocking, traffic monitoring \& bilingual UI. Proudly developed in UAE / Al Ain.\*\*
 
 
-!\[Version](https://img.shields.io/badge/version-1.0.0-blue)
 
-!\[Python](https://img.shields.io/badge/Python-3.8%2B-green)
 
-!\[License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-!\[UAE](https://img.shields.io/badge/Made%20in-UAE%20🇦🇪-red)
+&#x20;!\[image](https://mistralaichatupprodswe.blob.core.windows.net/chat-images/assistant/5a/b3/97/5ab39757-0bfd-4144-840f-7299858842db/09c16288-efa2-4498-936b-01702e956414/11066e6c-c806-41af-b40f-f1858e5e51ec/7f591a70-16ce-45da-9ea9-d63bd1475836.jpg?sv=2025-01-05\&spr=https\&st=2026-04-19T03%3A13%3A18Z\&se=2026-04-19T04%3A13%3A18Z\&skoid=c9baccad-3639-4379-a088-07b7e349293c\&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e\&skt=2026-04-19T03%3A13%3A18Z\&ske=2026-04-19T04%3A13%3A18Z\&sks=b\&skv=2025-01-05\&sr=b\&sp=r\&sig=h0mrVTSNrL9LYNShBIrSNfU51BjQhb1rzAcyllLYv80%3D) 
 
 
 
-\*\*Proudly developed in UAE 🇦🇪\*\*
 
 
+\## Features
 
-HomeNet is a powerful parental network control application that gives you full visibility and control over your home network. Monitor all connected devices, block unwanted content, set time-based internet restrictions, and receive real-time alerts — all from a modern bilingual (Arabic/English) interface.
+\- Block internet traffic by time (e.g., 11 PM–12 PM)
 
+\- Monitor and block gaming, social media, and streaming traffic
 
+\- Bilingual UI (Arabic/English)
 
-\---
+\- System alerts for new hosts and high traffic
 
+\- Internet speed test and connection check
 
+\- Admin dashboard for rules and device management
 
-\## ✨ Features
 
 
+\## Installation
 
-| Feature | Description |
+1\. Clone the repo:
 
-|---------|-------------|
+&#x20;  ```bash
 
-| 🕐 \*\*Time Blocking\*\* | Block internet access during specific hours (e.g., 11 PM – 12 PM) |
+&#x20;  git clone https://github.com/AbduF/HomeNet.git
 
-| 📊 \*\*Traffic Monitoring\*\* | Real-time traffic utilization, volume per host |
+&#x20;  cd HomeNet
 
-| 🎮 \*\*Content Blocking\*\* | Block gaming, social media, and streaming categories |
-
-| ️ \*\*Host Discovery\*\* | Auto-detect all devices with OS \& hardware details |
-
-| 🔔 \*\*System Alerts\*\* | Notifications for new hosts and high traffic |
-
-| 🌍 \*\*Bilingual UI\*\* | Full Arabic \& English support with RTL layout |
-
-| 📡 \*\*Speed Test\*\* | Built-in internet speed test \& connection check |
-
-|  \*\*Admin Panel\*\* | Change credentials, add recovery email, reset password |
-
-|  \*\*CLI + GUI\*\* | Command-line interface AND modern graphical interface |
-
-|  \*\*Multi-Platform\*\* | Works on PC, Laptop, and Raspberry Pi 3 |
-
-
-
-\---
-
-\## ️ Network Diagram
-
-
-
-┌───────────┐ ┌──────────────────────────┐ ┌──────────────┐
-
-│ │ │ HomeNet Controller │ │ │
-
-│ Internet │─────►│ (Firewall + Monitoring) │◄────►│ LAN Devices │
-
-│ (WAN) │ │ 🛡️ Network Security │ │ 💻🖥️📺 │
-
-│ │ └──────────────────────────┘ └──────────────┘
-
-└───────────┘ │
-
-▼
-
-┌────────────────┐
-
-│ Managed Switch │
-
-│ 🔌🔌 │
-
-└────────────────┘
-
-
-
-
-
-⚡ 5-Minute Installation Guide
-
-For Raspberry Pi 3 / Linux PC
-
-Steps
-
-1 git clone https://github.com/AbduF/HomeNet.git \&\& cd HomeNet
-
-2 sudo bash setup.sh
-
-3 sudo systemctl start homenetservice
-
-4 homenet-gui or homenet-cli
-
-5 Login: admin / 123456 → Change password immediately!
-
-🎯 Key Features Summary
-
-Feature
-
-CLI Command
-
-GUI Location
-
-Network Scan
-
-scan
-
-Hosts → Scan Network
-
-View Hosts
-
-hosts
-
-Hosts page
-
-Block Host
-
-block 192.168.1.x
-
-Hosts → Block button
-
-Block Gaming
-
-block gaming
-
-Blocking → Gaming toggle
-
-Block Social
-
-block social
-
-Blocking → Social toggle
-
-Block Streaming
-
-block streaming
-
-Blocking → Streaming toggle
-
-Time Blocking
-
-timerules set 23:00 00:00
-
-Time Rules page
-
-Speed Test
-
-speedtest
-
-Speed Test page
-
-Traffic Monitor
-
-monitor start
-
-Traffic → Start Monitoring
-
-Alerts
-
-alerts
-
-Alerts page
-
-Change Password
-
-system change password
-
-System → Admin Settings
-
-Set Email
-
-settings email x@y.com
-
-System → Recovery Email
-
-🔒 Security Notes
-
-Change default password (123456) immediately after first login
-
-Set up a recovery email for password reset
-
-Run the service as root (required for iptables/firewall)
-
-Keep the Raspberry Pi in a secure location
-
-Regularly update via git pull
