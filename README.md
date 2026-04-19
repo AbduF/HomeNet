@@ -90,65 +90,17 @@ HomeNet is a powerful parental network control application that gives you full v
 
 For Raspberry Pi 3 / Linux PC
 
-Step
+Steps
 
-Command
+1 git clone https://github.com/AbduF/HomeNet.git \&\& cd HomeNet
 
-Time
+2 sudo bash setup.sh
 
-1
+3 sudo systemctl start homenetservice
 
-git clone https://github.com/AbduF/HomeNet.git \&\& cd HomeNet
+4 homenet-gui or homenet-cli
 
-30s
-
-2
-
-sudo bash setup.sh
-
-2 min
-
-3
-
-sudo systemctl start homenetservice
-
-10s
-
-4
-
-homenet-gui or homenet-cli
-
-10s
-
-5
-
-Login: admin / 123456 → Change password immediately!
-
-30s
-
-Post-Install Configuration
-
-bash
-
-12345678910111213141516171819
-
-📋 GitHub Repository Setup
-
-Repository: AbduF/HomeNet
-
-Description:
-
-1
-
-Topics/Tags:
-
-1
-
-Push Steps
-
-bash
-
-12345678
+5 Login: admin / 123456 → Change password immediately!
 
 🎯 Key Features Summary
 
@@ -241,14 +193,3 @@ Run the service as root (required for iptables/firewall)
 Keep the Raspberry Pi in a secure location
 
 Regularly update via git pull
-
-
-
-
-
-
-
-
-
-
-
