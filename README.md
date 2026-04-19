@@ -1,30 +1,64 @@
-# 🌐 HomeNet - Parental Network Controller
-**Proudly developed in UAE 🇦🇪**
+\# 🌐 HomeNet — Parental Network Controller
 
-Modern bilingual (English + Arabic) Python app for parents to:
-- Block kids internet 11 PM – 12 PM (configurable)
-- Monitor all hosts, traffic volume & utilization in real-time
-- Block gaming / social media / streaming apps
-- Get instant alerts for new devices & high traffic
-- View detailed OS & hardware info of every device
-- Run internet speed test & connection check
-- Full admin system with password reset via email
 
-**Default credentials**: admin / 123456
 
-**Completely free & open source** — fork, improve, and use forever! ❤️
+!\[Version](https://img.shields.io/badge/version-1.0.0-blue)
 
-## Quick Start (5 minutes)
-See installation steps in the main README or above.
+!\[Python](https://img.shields.io/badge/Python-3.8%2B-green)
 
-## Features
-- Modern GUI (CustomTkinter) + CLI support
-- Full Arabic & English interface
-- Live network scanning (Scapy)
-- Traffic monitoring (psutil)
-- Speedtest integration
-- Time-based & app-based blocking rules
-- Email password reset
-- System alerts (new host + high traffic)
+!\[License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-Made with ❤️ in Al Ain City, Abu Dhabi, UAE.
+!\[UAE](https://img.shields.io/badge/Made%20in-UAE%20🇦🇪-red)
+
+
+
+\*\*Proudly developed in UAE 🇦🇪\*\*
+
+
+
+HomeNet is a powerful parental network control application that gives you full visibility and control over your home network. Monitor all connected devices, block unwanted content, set time-based internet restrictions, and receive real-time alerts — all from a modern bilingual (Arabic/English) interface.
+
+
+
+\---
+
+
+
+\## ✨ Features
+
+
+
+| Feature | Description |
+
+|---------|-------------|
+
+| 🕐 \*\*Time Blocking\*\* | Block internet access during specific hours (e.g., 11 PM – 12 PM) |
+
+| 📊 \*\*Traffic Monitoring\*\* | Real-time traffic utilization, volume per host |
+
+| 🎮 \*\*Content Blocking\*\* | Block gaming, social media, and streaming categories |
+
+| ️ \*\*Host Discovery\*\* | Auto-detect all devices with OS \& hardware details |
+
+| 🔔 \*\*System Alerts\*\* | Notifications for new hosts and high traffic |
+
+| 🌍 \*\*Bilingual UI\*\* | Full Arabic \& English support with RTL layout |
+
+| 📡 \*\*Speed Test\*\* | Built-in internet speed test \& connection check |
+
+|  \*\*Admin Panel\*\* | Change credentials, add recovery email, reset password |
+
+|  \*\*CLI + GUI\*\* | Command-line interface AND modern graphical interface |
+
+|  \*\*Multi-Platform\*\* | Works on PC, Laptop, and Raspberry Pi 3 |
+
+
+
+\---
+
+
+
+\## ️ Network Diagram
+
+
+
