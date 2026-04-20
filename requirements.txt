@@ -1,24 +1,18 @@
-# HomeNet Requirements
-# Core GUI
+# HomeNet Requirements - Optimized for Raspberry Pi 3
+# Minimal dependencies for best performance
+
+# Core GUI - Lightweight
 customtkinter>=5.2.0
 Pillow>=10.0.0
 
-# Network & System
+# Network & System - Minimal
 psutil>=5.9.0
-scapy>=2.5.0
-
-# Visualization
-matplotlib>=3.7.0
 
 # Notifications
 plyer>=2.0.0
 
-# Network Tools
+# HTTP for AI calls
 requests>=2.31.0
-speedtest-cli>=2.1.0
 
 # Database
 # (sqlite3 built-in)
-
-# Utils
-uuid>=1.30
