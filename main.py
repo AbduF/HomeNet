@@ -1,68 +1,58 @@
-import customtkinter as ctk
-import json
+#!/usr/bin/env python3
+"""
+HomeNet - Parental Network Controller
+Proudly developed in UAE, Al Ain
+Author: AbduF
+Contact: abdalfaqeeh@gmail.com
+
+A comprehensive parental control application for home networks.
+Features: Time-based blocking, traffic monitoring, host management,
+          bilingual UI (Arabic/English), and system alerts.
+"""
+
 import sys
 import os
+import logging
+from pathlib import Path
 
-# Set theme
-ctk.set_appearance_mode("Dark")
-ctk.set_default_color_theme("blue")
+# Add app directory to path
+APP_DIR = Path(__file__).parent
+sys.path.insert(0, str(APP_DIR))
 
-def load_i18n(lang):
-    path = f"i18n/{lang}.json"
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+from app import HomeNetApp
 
-def load_config():
-    if os.path.exists("config.json"):
-        with open("config.json", "r") as f:
-            return json.load(f)
-    return {
-        "admin": {"username": "admin", "password": "123456", "email": ""},
-        "settings": {"language": "en", "block_schedule": {"start": "23:00", "end": "00:00"}, "traffic_alert_threshold_mb": 500, "alerts_enabled": True},
-        "rules": []
-    }
 
-class LoginWindow(ctk.CTk):
-    def __init__(self, config, i18n):
-        super().__init__()
-        self.config = config
-        self.i18n = i18n
-        self.title(self.i18n.get("login", "Login"))
-        self.geometry("400x300")
-        self.resizable(False, False)
-        
-        ctk.CTkLabel(self, text=self.i18n.get("app_title", "HomeNet"), font=ctk.CTkFont(size=24, weight="bold")).pack(pady=20)
-        ctk.CTkLabel(self, text="🇦 UAE / Al Ain", font=ctk.CTkFont(size=12)).pack(pady=0)
-        
-        self.user_entry = ctk.CTkEntry(self, placeholder_text=self.i18n.get("username", "Username"), width=250)
-        self.user_entry.pack(pady=10)
-        
-        self.pass_entry = ctk.CTkEntry(self, placeholder_text=self.i18n.get("password", "Password"), show="*", width=250)
-        self.pass_entry.pack(pady=10)
-        
-        ctk.CTkButton(self, text=self.i18n.get("login", "Login"), command=self.authenticate, width=250).pack(pady=20)
-        
-        self.error_label = ctk.CTkLabel(self, text="", text_color="red")
-        self.error_label.pack()
-        
-    def authenticate(self):
-        user = self.user_entry.get()
-        pwd = self.pass_entry.get()
-        
-        if user == self.config["admin"]["username"] and pwd == self.config["admin"]["password"]:
-            self.destroy()
-            from ui.dashboard import HomeNetDashboard
-            app = HomeNetDashboard(self.config, self.i18n)
-            app.mainloop()
-        else:
-            self.error_label.configure(text="Invalid credentials")
+def setup_logging():
+    """Configure application logging."""
+    log_dir = APP_DIR / "logs"
+    log_dir.mkdir(exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_dir / "homenet.log"),
+            logging.StreamHandler()
+        ]
+    )
+
+
+def main():
+    """Main entry point for HomeNet application."""
+    setup_logging()
+    logger = logging.getLogger("HomeNet")
+    logger.info("Starting HomeNet - Parental Network Controller")
+    logger.info(f"Application directory: {APP_DIR}")
+
+    try:
+        app = HomeNetApp()
+        app.run()
+    except KeyboardInterrupt:
+        logger.info("Application terminated by user")
+    except Exception as e:
+        logger.error(f"Critical error: {e}", exc_info=True)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    config = load_config()
-    lang = config["settings"]["language"]
-    i18n = load_i18n(lang)
-    
-    login = LoginWindow(config, i18n)
-    login.mainloop()
+    main()

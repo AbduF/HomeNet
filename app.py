@@ -1,157 +1,100 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-import json
+"""
+HomeNet - Main Application Class
+Parental Network Controller with bilingual support
+"""
+
 import os
-import psutil
-import speedtest
-import nmap
-import threading
-import time
-from datetime import datetime
-from functools import wraps
-import socket
+import sys
+import customtkinter as ctk
+from pathlib import Path
+import logging
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
+from core.database import Database
+from core.config import Config
+from gui.login import LoginWindow
+from gui.main_window import MainWindow
 
-# Load config
-def load_config():
-    with open('config.json', 'r') as f:
-        return json.load(f)
 
-def save_config(config):
-    with open('config.json', 'w') as f:
-        json.dump(config, f, indent=2)
+class HomeNetApp(ctk.CTk):
+    """Main application class for HomeNet."""
 
-def load_i18n(lang='en'):
-    try:
-        with open(f'i18n/{lang}.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return {}
+    def __init__(self):
+        super().__init__()
 
-# Login required decorator
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+        # Configuration
+        self.app_dir = Path(__file__).parent
+        self.config = Config(self.app_dir / "config.json")
+        self.db = Database(self.app_dir / "homenet.db")
 
-# Routes
-@app.route('/')
-def index():
-    if session.get('logged_in'):
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+        # Setup logging
+        self.logger = logging.getLogger("HomeNet.App")
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    config = load_config()
-    i18n = load_i18n(config['settings']['language'])
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if username == config['admin']['username'] and password == config['admin']['password']:
-            session['logged_in'] = True
-            session['username'] = username
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': i18n.get('invalid_credentials', 'Invalid credentials')})
-    
-    return render_template('login.html', i18n=i18n, config=config)
+        # Window configuration
+        self.title("HomeNet - Parental Network Controller")
+        self.geometry("1400x900")
+        self.minsize(1200, 700)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
+        # Set theme
+        self.setup_theme()
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    config = load_config()
-    i18n = load_i18n(config['settings']['language'])
-    return render_template('dashboard.html', i18n=i18n, config=config)
+        # Initialize user session
+        self.current_user = None
 
-@app.route('/api/hosts')
-@login_required
-def get_hosts():
-    try:
-        nm = nmap.PortScanner()
-        # Get local network range
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        network = '.'.join(local_ip.split('.')[:-1]) + '.0/24'
-        
-        nm.scan(hosts=network, arguments='-sn')
-        hosts = []
-        
-        for host in nm.all_hosts():
-            host_info = {
-                'ip': host,
-                'mac': 'Unknown',
-                'vendor': 'Unknown',
-                'status': 'up'
-            }
-            
-            if 'mac' in nm[host]['addresses']:
-                host_info['mac'] = nm[host]['addresses']['mac']
-                if 'vendor' in nm[host] and nm[host]['vendor']:
-                    host_info['vendor'] = list(nm[host]['vendor'].values())[0]
-            
-            hosts.append(host_info)
-        
-        return jsonify(hosts)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Start with login
+        self.show_login()
 
-@app.route('/api/traffic')
-@login_required
-def get_traffic():
-    try:
-        net = psutil.net_io_counters()
-        return jsonify({
-            'bytes_sent': net.bytes_sent,
-            'bytes_recv': net.bytes_recv,
-            'packets_sent': net.packets_sent,
-            'packets_recv': net.packets_recv,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    def setup_theme(self):
+        """Configure application theme."""
+        # Color scheme
+        ctk.set_default_color_theme("blue")
+        ctk.set_appearance_mode("dark")
 
-@app.route('/api/speedtest', methods=['POST'])
-@login_required
-def run_speedtest():
-    try:
-        st = speedtest.Speedtest()
-        st.get_best_server()
-        download = st.download() / 1_000_000
-        upload = st.upload() / 1_000_000
-        ping = st.results.ping
-        
-        return jsonify({
-            'download': round(download, 2),
-            'upload': round(upload, 2),
-            'ping': round(ping, 2)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Configure colors
+        self.colors = {
+            'primary': '#1E88E5',
+            'secondary': '#43A047',
+            'accent': '#FF7043',
+            'danger': '#E53935',
+            'bg_dark': '#1A1A2E',
+            'bg_light': '#16213E',
+            'surface': '#0F3460',
+            'text_primary': '#FFFFFF',
+            'text_secondary': '#B0B0B0'
+        }
 
-@app.route('/api/rules', methods=['GET', 'POST'])
-@login_required
-def manage_rules():
-    config = load_config()
-    
-    if request.method == 'POST':
-        data = request.json
-        if 'rules' in data:
-            config['rules'] = data['rules']
-        if 'block_schedule' in data:
-            config['settings']['block_schedule'] = data['block_schedule']
-        save_config(config)
-        return jsonify({'success': True})
-    
-    return
+    def show_login(self):
+        """Display login window."""
+        self.logger.info("Showing login window")
+
+        # Clear existing widgets
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # Create login window
+        login = LoginWindow(self, self.db, self.config)
+        login.pack(fill="both", expand=True)
+
+        # Bind login success
+        self.bind("<LoginSuccess>", lambda e: self.on_login_success())
+
+    def on_login_success(self):
+        """Handle successful login."""
+        self.logger.info("Login successful, showing main window")
+
+        # Clear widgets
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # Create main window
+        main = MainWindow(self, self.db, self.config)
+        main.pack(fill="both", expand=True)
+
+
+def main():
+    """Entry point for HomeNet."""
+    app = HomeNetApp()
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    main()

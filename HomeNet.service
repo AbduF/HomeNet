@@ -1,0 +1,24 @@
+[Unit]
+Description=HomeNet - Parental Network Controller
+Documentation=https://github.com/AbduF/HomeNet
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/HomeNet
+ExecStart=/home/pi/HomeNet/venv/bin/python3 /home/pi/HomeNet/main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/pi/HomeNet/logs/stdout.log
+StandardError=append:/home/pi/HomeNet/logs/stderr.log
+
+# Security settings
+NoNewPrivileges=false
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/pi/HomeNet
+
+[Install]
+WantedBy=multi-user.target
