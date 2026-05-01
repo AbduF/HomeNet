@@ -48,15 +48,15 @@ cd HomeNet
 Step 2: Set Up a Virtual Environment✅
 
 python3 -m venv venv
-source venv/bin/activate  # On Windows: `venv\Scripts\activate`
+
+source venv/bin/activate  
+# On Windows: `venv\Scripts\activate
 
 
 
 Step 3: Install Dependencies✅
 
 pip install -r requirements.txt
-
-
 
 Step 4: Install and Configure Firewall✅
 
@@ -65,11 +65,13 @@ To allow external access to the app, install and configure the firewall to enabl
 Install ufw (Uncomplicated Firewall)
 
 sudo apt update
+
 sudo apt install ufw -y
 
-Enable ufw and Allow Port 5000
+Enable ufw and Allow Port 5000✅
 
 sudo ufw enable
+
 sudo ufw allow 5000
 
 Verify the Rule
@@ -102,7 +104,7 @@ Find your Raspberry Pi's IP address:
 
 
 
-Open a web browser on another PC (on the same network) and navigate to:
+Open a web browser on another PC (on the same network) and navigate to:✅
 
  http://<raspberry-pi-ip>:5000/
 
@@ -129,17 +131,17 @@ Password: 123456 (or the password you configured in .env).
 
 
 
-Check if the app is running:
+Check if the app is running✅
 Run ps aux | grep python to confirm the Flask process is active.
 
 
 
-Check the IP address:
+Check the IP address✅
 Run hostname -I on your Raspberry Pi to find its IP address.
 
 
 
-Check the firewall:
+Check the firewall✅
 Ensure your firewall allows traffic on port 5000:
 
 sudo ufw status
@@ -150,7 +152,7 @@ sudo ufw allow 5000
 
 
 
-Check the network✨:
+Check the network✅
 Ensure your computer and Raspberry Pi are on the same network.
 
 
