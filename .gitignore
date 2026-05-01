@@ -1,12 +1,9 @@
-# Byte-compiled / optimized / DLL files
+cat > .gitignore << 'EOF'
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -24,80 +21,32 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Environments
-.env
-.venv
-env/
+# Virtual environments
 venv/
 ENV/
-env.bak/
-venv.bak/
+env/
+.venv/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Flask
+instance/
+.webassets-cache
 
-# Rope project settings
-.ropeproject
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# IDEs
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Project specific
-*.db
-*.db-journal
+# Logs
 *.log
-logs/*.log
-data/*
-!data/.gitkeep
-backups/*
-!backups/.gitkeep
-config.json
-*.bak
-
-# Application files
 homenet.db
-homenet.db-journal
-config.json.bak
+EOF
