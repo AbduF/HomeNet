@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="{{ 'ar' if g.lang == 'ar' else 'en' }}" dir="{{ 'rtl' if g.lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HomeNet - Parental Network Controller">
+    <title>{% block title %}HomeNet{% endblock %}</title>
+
+    <!-- Load Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Load External CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Inline Critical CSS (for faster loading) -->
+    <style>
+        /* Prevent FOUC (Flash of Unstyled Content) */
+        body { visibility: hidden; }
+        body.loaded { visibility: visible; }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="loaded">
+    <div class="language-switcher">
+        <a href="?lang=en">English</a> | <a href="?lang=ar">العربية</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="logo">HomeNet</div>
+            {% block header_actions %}{% endblock %}
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

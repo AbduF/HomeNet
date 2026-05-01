@@ -42,11 +42,11 @@ HTTPS-ready (use with Nginx + Certbot).
 
 
 Input validation (IP/MAC addresses).
-✅ DHCP Support: Assigns IP addresses to hosts and forces them to use HomeNet for DNS.
+✅ Works with Existing Router: No need to disable router DHCP. Uses DNS blocking and firewall rules to manage the network.
 
 
 
-📥 Installation (6 Steps)
+📥 Installation (5 Steps)
 
 Prerequisites
 
@@ -62,7 +62,7 @@ Python 3.6+.
 
 
 
-sudo access.
+**sudo access**.
 
 
 
@@ -112,65 +112,9 @@ You should see 5000 listed as allowed.
 
 
 
-Step 5: Set Up DHCP and DNS Blocking
+Step 5: Configure Router to Use Raspberry Pi as DNS Server
 
-HomeNet uses dnsmasq to assign IP addresses (DHCP) and block unwanted domains (DNS). To enable this:
-
-Install dnsmasq
-
-sudo apt install dnsmasq -y
-
-Disable DHCP on Your Router
-
-
-
-
-
-Log in to your router's admin panel (usually http://192.168.1.1).
-
-
-
-Disable DHCP on the router.
-
-
-
-Save and restart the router.
-
-
-
-⚠️ Warning: Disabling DHCP on your router will break internet access for all devices until dnsmasq is running. Ensure dnsmasq is properly configured before disabling router DHCP.
-
-Run HomeNet Setup
-
-Start the app and trigger the setup via the API or manually:
-
-python app.py
-
-Then, in another terminal, run:
-
-curl -X POST -u admin:123456 http://localhost:5000/api/setup
-
-This will configure dnsmasq for DHCP and DNS blocking.
-
-Verify DHCP Leases
-
-Check if hosts are receiving IPs from dnsmasq:
-
-sudo cat /var/lib/misc/dnsmasq.leases
-
-
-
-Step 6: Run HomeNet
-
-python app.py
-
-You should see:
-
- * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
-
-
-
-Step 7: Access the Dashboard from Another PC
+To ensure all devices on your network use HomeNet for DNS blocking, configure your router to use your Raspberry Pi as the DNS server:
 
 
 
@@ -184,11 +128,77 @@ Find your Raspberry Pi's IP address:
 
 
 
+Log in to your router's admin panel (usually http://192.168.1.1).
+
+
+
+Find the DNS settings (usually under LAN, DHCP, or Internet).
+
+
+
+Set the primary DNS server to your Raspberry Pi's IP (e.g., 192.168.1.100).
+
+
+
+Save and restart the router.
+
+
+
+⚠️ Note: If your router does not allow changing DNS settings, you can manually configure each device to use your Raspberry Pi as its DNS server.
+
+
+
+Step 6: Run HomeNet
+
+python app.py
+
+You should see:
+
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+
+
+
+Step 7: Set Up DNS Blocking and Firewall
+
+Trigger the setup via the API:
+
+curl -X POST -u admin:123456 http://localhost:5000/api/setup
+
+This will:
+
+
+
+
+
+Configure dnsmasq for DNS blocking.
+
+
+
+Set up firewall rules (time-based blocking after 10 PM).
+
+
+
+Step 8: Scan for Connected Hosts
+
+To populate the Hosts section of the dashboard, run:
+
+curl -X POST -u admin:123456 http://localhost:5000/api/scan_hosts
+
+This will scan your network for connected devices and add them to the database.
+
+
+
+Step 9: Access the Dashboard from Another PC
+
+
+
+
+
 Open a web browser on another PC (on the same network) and navigate to:
 
  http://<raspberry-pi-ip>:5000/
 
- Replace <raspberry-pi-ip> with the IP address from step 1 (e.g., http://192.168.1.100:5000/).
+ Replace <raspberry-pi-ip> with the IP address of your Raspberry Pi (e.g., http://192.168.1.100:5000/).
 
 
 
@@ -258,47 +268,7 @@ Replace <PID> with the process ID from the lsof output.
 
 
 
-3. DHCP Not Working?
-
-
-
-
-
-Check dnsmasq status:
-
-sudo systemctl status dnsmasqIf it's not running, start it:
-
-sudo systemctl start dnsmasq
-
-
-
-Check dnsmasq logs:
-
-sudo tail -f /var/log/dnsmasq.log
-
-
-
-Verify DHCP leases:
-
-sudo cat /var/lib/misc/dnsmasq.leasesIf no leases appear, ensure:
-
-
-
-
-
-Your router's DHCP is disabled.
-
-
-
-Your Raspberry Pi has a static IP.
-
-
-
-The dhcp-range in /etc/dnsmasq.conf matches your network subnet.
-
-
-
-4. DNS Blocking Not Working?
+3. DNS Blocking Not Working?
 
 
 
@@ -315,13 +285,73 @@ sudo cat /etc/dnsmasq.confEnsure the `address=/{domain}/0.0.0.0` lines are prese
 
 
 
-Restart dnsmasq:
+Check dnsmasq logs:
+
+sudo tail -f /var/log/dnsmasq.log
+
+
+
+**Restart dnsmasq**:
 
 sudo systemctl restart dnsmasq
 
 
 
-5. Alternative: Use iptables Directly
+Verify router DNS settings:
+Ensure your router is using your Raspberry Pi's IP as the DNS server.
+
+
+
+4. Hosts Not Appearing in Dashboard?
+
+
+
+
+
+Manually scan for hosts:
+Run:
+
+curl -X POST -u admin:123456 http://localhost:5000/api/scan_hosts
+
+
+
+**Check arp-scan**:
+Ensure arp-scan is installed:
+
+sudo apt install arp-scan -y
+
+
+
+Run arp-scan manually:
+
+sudo arp-scan --localnetIf this works, the issue may be with permissions in the `get_connected_hosts()` function.
+
+
+
+5. Firewall Rules Not Working?
+
+
+
+
+
+Check iptables rules:
+
+sudo iptables -L -n -v
+
+
+
+Test time-based blocking:
+Wait until 10 PM and try accessing a website. It should be blocked.
+
+
+
+Check firewall logs:
+
+sudo dmesg | grep "HOMENET BLOCKED"
+
+
+
+6. Alternative: Use iptables Directly
 
 If ufw is not available, use iptables to allow port 5000:
 
@@ -332,7 +362,267 @@ To make the rule persistent:
 sudo apt install iptables-persistent -y
 sudo netfilter-persistent save
 
----
 
-✨Email me abdalfaqeeh@gmail.com for any comments and feedback✨
-✨Thanks to support my project✨
+
+
+
+📌 Summary
+
+
+
+
+
+
+
+Step
+
+
+
+Action
+
+
+
+Command/URL
+
+
+
+
+
+1
+
+
+
+Clone the repository
+
+
+
+git clone https://github.com/AbduF/HomeNet.git
+
+
+
+
+
+2
+
+
+
+Set up virtual environment
+
+
+
+python3 -m venv venv and source venv/bin/activate
+
+
+
+
+
+3
+
+
+
+Install dependencies
+
+
+
+pip install -r requirements.txt
+
+
+
+
+
+4
+
+
+
+Install and enable firewall
+
+
+
+sudo apt install ufw -y, sudo ufw enable, sudo ufw allow 5000
+
+
+
+
+
+5
+
+
+
+Configure router DNS
+
+
+
+Set Raspberry Pi IP as DNS server in router settings
+
+
+
+
+
+6
+
+
+
+Run HomeNet
+
+
+
+python app.py
+
+
+
+
+
+7
+
+
+
+Set up DNS and firewall
+
+
+
+curl -X POST -u admin:123456 http://localhost:5000/api/setup
+
+
+
+
+
+8
+
+
+
+Scan for hosts
+
+
+
+curl -X POST -u admin:123456 http://localhost:5000/api/scan_hosts
+
+
+
+
+
+9
+
+
+
+Access the dashboard
+
+
+
+http://<raspberry-pi-ip>:5000/
+
+
+
+
+
+10
+
+
+
+Log in
+
+
+
+Username: admin, Password: 123456
+
+
+
+
+
+🛡 Security Recommendations
+
+
+
+
+
+Change Default Credentials:
+
+Update the .env file with a strong password:
+
+
+
+Use HTTPS:
+
+Set up Nginx + Certbot for HTTPS access. Follow a guide like Certbot's instructions.
+
+
+
+Static IP for Raspberry Pi:
+
+Configure a static IP for your Raspberry Pi to prevent it from changing after a reboot.
+
+
+
+Backup Configurations:
+
+Backup your dnsmasq.conf and iptables rules:
+
+
+
+
+
+🔹 How It Works Without DHCP
+
+
+
+
+
+DNS Blocking:
+
+
+
+
+
+dnsmasq runs on your Raspberry Pi and blocks unwanted domains (e.g., social media, gaming, adult sites).
+
+
+
+Your router is configured to use your Raspberry Pi as the DNS server, so all devices on the network use dnsmasq for DNS resolution.
+
+
+
+Firewall Rules:
+
+
+
+
+
+iptables blocks all internet traffic after 10 PM until 12 AM.
+
+
+
+Local network traffic (e.g., between devices on your LAN) is still allowed.
+
+
+
+Host Detection:
+
+
+
+
+
+The app uses arp-scan to detect connected devices on your network and displays them in the dashboard.
+
+
+
+Hosts are stored in the SQLite database for tracking and monitoring.
+
+
+
+
+
+Would you like me to provide a script to automate the setup (e.g., a setup.sh file) or help with any other part? For example, I can create a script to:
+
+
+
+
+
+Install dependencies (ufw, dnsmasq, arp-scan).
+
+
+
+Configure the router DNS settings automatically (if supported).
+
+
+
+Set up the firewall and dnsmasq with a single command.
+
