@@ -1,4 +1,4 @@
-cat > app.py << 'EOF'
+
 from flask import Flask, render_template, jsonify, request, abort
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
@@ -413,4 +413,3 @@ def health():
 if __name__ == '__main__':
     logging.info("Starting HomeNet...")
     app.run(host='0.0.0.0', port=5000, debug=False)
-EOF
