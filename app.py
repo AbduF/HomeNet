@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, jsonify, request, abort
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
@@ -7,8 +6,14 @@ import sqlite3
 import subprocess
 import os
 import re
+import sys
 from datetime import datetime, timedelta
 import logging
+from logging.handlers import RotatingFileHandler
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -20,16 +25,24 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-chan
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 DB_PATH = os.path.join(os.path.dirname(__file__), 'homenet.db')
 
-# Logging
-logging.basicConfig(
-    filename='homenet.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Ensure the database directory exists
+db_dir = os.path.dirname(DB_PATH)
+os.makedirs(db_dir, exist_ok=True)
 
-# Basic Auth Users (CHANGE THIS IN PRODUCTION!)
+# Logging
+log_handler = RotatingFileHandler(
+    'homenet.log',
+    maxBytes=1024 * 1024,  # 1 MB
+    backupCount=5,
+    encoding='utf-8'
+)
+log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(log_handler)
+logging.getLogger().setLevel(logging.INFO)
+
+# Basic Auth Users (from environment variables)
 users = {
-    "admin": generate_password_hash("securepassword123")
+    os.environ.get('ADMIN_USER', 'admin'): generate_password_hash(os.environ.get('ADMIN_PASSWORD', '123456'))
 }
 
 @auth.verify_password
@@ -127,7 +140,12 @@ def get_connected_hosts():
         return []
 
     try:
-        result = subprocess.run(['arp-scan', '--localnet'], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ['arp-scan', '--localnet'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
         hosts = []
         for line in result.stdout.split('\n'):
             if ':' in line and '.' in line and 'Starting' not in line and 'Interface' not in line:
@@ -138,7 +156,7 @@ def get_connected_hosts():
                     hosts.append({'ip': ip, 'mac': mac, 'hostname': '', 'os': ''})
         return hosts
     except subprocess.CalledProcessError as e:
-        logging.error(f"Error running arp-scan: {e}")
+        logging.error(f"Error running arp-scan: {e.stderr}")
         return []
 
 def load_blocklists():
@@ -163,14 +181,18 @@ def setup_dns_blocking():
         # Check if dnsmasq is installed
         subprocess.run(['which', 'dnsmasq'], check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        logging.info("Installing dnsmasq...")
+        logging.info("dnsmasq is not installed. Attempting to install...")
         try:
             subprocess.run(['sudo', 'apt', 'install', '-y', 'dnsmasq'], check=True)
         except subprocess.CalledProcessError as e:
-            logging.error(f"Failed to install dnsmasq: {e}")
+            logging.error(f"Failed to install dnsmasq: {e.stderr}")
             return False
 
     try:
+        # Create a tmp directory in the project folder
+        tmp_dir = os.path.join(os.path.dirname(__file__), 'tmp')
+        os.makedirs(tmp_dir, exist_ok=True)
+
         # Backup original config
         subprocess.run(['sudo', 'cp', '/etc/dnsmasq.conf', '/etc/dnsmasq.conf.bak'], check=True)
 
@@ -198,21 +220,23 @@ log-queries
 log-dhcp
 log-facility=/var/log/dnsmasq.log
 """
-        with open('/tmp/dnsmasq.conf', 'w') as f:
+        dnsmasq_conf_path = os.path.join(tmp_dir, 'dnsmasq.conf')
+        with open(dnsmasq_conf_path, 'w') as f:
             f.write(dnsmasq_conf)
-        subprocess.run(['sudo', 'cp', '/tmp/dnsmasq.conf', '/etc/dnsmasq.conf'], check=True)
+        subprocess.run(['sudo', 'cp', dnsmasq_conf_path, '/etc/dnsmasq.conf'], check=True)
 
         # Create blocklist directory
         subprocess.run(['sudo', 'mkdir', '-p', '/etc/dnsmasq.d'], check=True)
 
         # Add blocklists
         blocklists = load_blocklists()
-        with open('/tmp/blocklists.conf', 'w') as f:
+        blocklists_conf_path = os.path.join(tmp_dir, 'blocklists.conf')
+        with open(blocklists_conf_path, 'w') as f:
             for category, domains in blocklists.items():
                 for domain in domains:
                     f.write(f"address=/{domain}/0.0.0.0\n")
 
-        subprocess.run(['sudo', 'cp', '/tmp/blocklists.conf', '/etc/dnsmasq.d/blocklists.conf'], check=True)
+        subprocess.run(['sudo', 'cp', blocklists_conf_path, '/etc/dnsmasq.d/blocklists.conf'], check=True)
 
         # Restart dnsmasq
         subprocess.run(['sudo', 'systemctl', 'restart', 'dnsmasq'], check=True)
@@ -221,7 +245,7 @@ log-facility=/var/log/dnsmasq.log
         logging.info("DNS blocking setup completed successfully.")
         return True
     except subprocess.CalledProcessError as e:
-        logging.error(f"DNS setup failed: {e}")
+        logging.error(f"DNS setup failed: {e.stderr}")
         return False
 
 def setup_firewall():
@@ -229,45 +253,49 @@ def setup_firewall():
     try:
         # Check for root
         if os.geteuid() != 0:
-            logging.error("Firewall setup requires root privileges.")
+            logging.error("Firewall setup requires root privileges. Run with sudo or as root.")
             return False
 
         # Flush existing rules
-        subprocess.run(['sudo', 'iptables', '-F'], check=True)
-        subprocess.run(['sudo', 'iptables', '-X'], check=True)
+        subprocess.run(['iptables', '-F'], check=True)
+        subprocess.run(['iptables', '-X'], check=True)
 
         # Allow loopback and established connections
-        subprocess.run(['sudo', 'iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'INPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'INPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
 
         # Allow DNS, HTTP, HTTPS, ICMP
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '80', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '443', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'icmp', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '80', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '443', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'icmp', '-j', 'ACCEPT'], check=True)
 
         # Allow local network traffic
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-d', '192.168.0.0/16', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-d', '10.0.0.0/8', '-j', 'ACCEPT'], check=True)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-d', '172.16.0.0/12', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '192.168.0.0/16', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '10.0.0.0/8', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '172.16.0.0/12', '-j', 'ACCEPT'], check=True)
 
         # Block all traffic after 10 PM (22:00) until 12 AM (00:00)
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'DROP'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'DROP'], check=True)
 
         # Log blocked traffic
-        subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'LOG', '--log-prefix', 'HOMENET BLOCKED: '], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'LOG', '--log-prefix', 'HOMENET BLOCKED: '], check=True)
 
         # Save rules
-        subprocess.run(['sudo', 'apt', 'install', '-y', 'iptables-persistent'], check=True)
-        subprocess.run(['sudo', 'netfilter-persistent', 'save'], check=True)
+        try:
+            subprocess.run(['apt', 'install', '-y', 'iptables-persistent'], check=True)
+            subprocess.run(['netfilter-persistent', 'save'], check=True)
+        except subprocess.CalledProcessError as e:
+            logging.warning(f"Could not save iptables rules permanently: {e.stderr}")
+            logging.info("Firewall rules will be lost after reboot.")
 
         logging.info("Firewall setup completed successfully.")
         return True
     except subprocess.CalledProcessError as e:
-        logging.error(f"Firewall setup failed: {e}")
+        logging.error(f"Firewall setup failed: {e.stderr}")
         return False
 
 # --- API Endpoints ---
