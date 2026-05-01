@@ -176,7 +176,7 @@ def load_blocklists():
     }
 
 def setup_dns_blocking():
-    """Set up DNS blocking using dnsmasq."""
+    """Set up DNS blocking and DHCP using dnsmasq."""
     try:
         # Check if dnsmasq is installed
         subprocess.run(['which', 'dnsmasq'], check=True, stdout=subprocess.PIPE)
@@ -202,11 +202,16 @@ def setup_dns_blocking():
             logging.error("Could not determine IP address.")
             return False
 
-        # Configure dnsmasq
-        dnsmasq_conf = f"""# HomeNet DNS Configuration
+        # Configure dnsmasq with DHCP
+        dnsmasq_conf = f"""# HomeNet DNS and DHCP Configuration
 interface=eth0
 listen-address={ip}
 bind-interfaces
+
+# Enable DHCP
+dhcp-range=192.168.1.100,192.168.1.200,12h
+dhcp-option=option:router,{ip}
+dhcp-option=option:dns-server,{ip}
 
 # Forward DNS queries to Google DNS
 server=8.8.8.8
@@ -242,10 +247,10 @@ log-facility=/var/log/dnsmasq.log
         subprocess.run(['sudo', 'systemctl', 'restart', 'dnsmasq'], check=True)
         subprocess.run(['sudo', 'systemctl', 'enable', 'dnsmasq'], check=True)
 
-        logging.info("DNS blocking setup completed successfully.")
+        logging.info("DNS and DHCP setup completed successfully.")
         return True
     except subprocess.CalledProcessError as e:
-        logging.error(f"DNS setup failed: {e.stderr}")
+        logging.error(f"DNS/DHCP setup failed: {e.stderr}")
         return False
 
 def setup_firewall():
@@ -419,7 +424,7 @@ def add_host():
 @app.route('/api/setup', methods=['POST'])
 @auth.login_required
 def api_setup():
-    """Set up DNS and firewall via API."""
+    """Set up DNS, DHCP, and firewall via API."""
     try:
         dns_success = setup_dns_blocking()
         firewall_success = setup_firewall()
