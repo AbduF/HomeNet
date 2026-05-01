@@ -34,3 +34,13 @@ Proudly developed in the UAE 🇦🇪
 ```bash
 git clone https://github.com/AbduF/HomeNet.git
 cd HomeNet
+
+### **Step 2: Set Up a Virtual Environment**
+python3 -m venv venv
+source venv/bin/activate  # On Windows: `venv\Scripts\activate
+
+### **Step 3:  Install Dependencies**
+pip install -r requirements.txt
+
+### **Step 4:  Run HomeNet App**
+python app.py
