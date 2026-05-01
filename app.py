@@ -547,4 +547,23 @@ app.static_folder = 'static'
 app.static_url_path = '/static'
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+  app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+
+  # Add this to your existing app.py (after the /api/speedtest endpoint)
+
+@app.route('/api/traffic')
+@auth.login_required
+def get_traffic():
+    """Get traffic data with pagination and limit for charts."""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        traffic = db_query(f'''
+            SELECT h.ip, h.hostname, t.timestamp, t.bytes_sent, t.bytes_received
+            FROM traffic t
+            JOIN hosts h ON t.host_id = h.id
+            ORDER BY t.timestamp DESC
+            LIMIT {limit}
+        ''')
+        return jsonify([dict(row) for row in traffic])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

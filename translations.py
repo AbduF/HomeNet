@@ -17,10 +17,12 @@ translations = {
         "username": "Username",
         "password": "Password",
         "login_error": "Invalid username or password",
+        "too_many_attempts": "Too many attempts. Try again later.",
 
         # Dashboard
         "hosts": "Hosts",
         "traffic": "Traffic",
+        "traffic_monitoring": "Traffic Monitoring",
         "alerts": "Alerts",
         "dns_blocks": "DNS Blocks",
         "logs": "Logs",
@@ -31,6 +33,18 @@ translations = {
         "firewall_setup": "Firewall Setup",
         "setup_success": "Setup completed successfully!",
         "setup_failed": "Setup failed. Check logs for details.",
+
+        # Speed Test
+        "speed_test": "Speed Test",
+        "test_speed": "Test Speed",
+        "speed_status": "Click the button to test your internet speed.",
+        "internet_online": "Internet is online.",
+        "internet_online_no_speedtest": "Internet is online (speedtest-cli not installed).",
+        "internet_offline": "Internet is offline!",
+        "download_speed": "Download:",
+        "upload_speed": "Upload:",
+        "ping": "Ping:",
+        "testing_speed": "Testing speed...",
 
         # Hosts
         "ip": "IP",
@@ -51,6 +65,7 @@ translations = {
         "alert_type": "Type",
         "message": "Message",
         "no_alerts": "No alerts.",
+        "new_host_alert": "New host detected",
 
         # DNS Blocks
         "domain": "Domain",
@@ -67,6 +82,7 @@ translations = {
         "error": "Error",
         "permission_denied": "Permission denied. Try running with sudo.",
         "not_found": "Not found.",
+        "rate_limited": "Too many requests. Try again later."
     },
     "ar": {
         # General
@@ -85,10 +101,12 @@ translations = {
         "username": "اسم المستخدم",
         "password": "كلمة المرور",
         "login_error": "اسم المستخدم أو كلمة المرور غير صحيحة",
+        "too_many_attempts": "محاولات كثيرة. حاول مرة أخرى لاحقًا.",
 
         # Dashboard
         "hosts": "الأجهزة",
         "traffic": "الحركة المرورية",
+        "traffic_monitoring": "مراقبة الحركة المرورية",
         "alerts": "التنبيهات",
         "dns_blocks": "حظر DNS",
         "logs": "السجلات",
@@ -99,6 +117,18 @@ translations = {
         "firewall_setup": "إعداد جدار الحماية",
         "setup_success": "تم الإعداد بنجاح!",
         "setup_failed": "فشل الإعداد. راجع السجلات.",
+
+        # Speed Test
+        "speed_test": "اختبار السرعة",
+        "test_speed": "اختبار السرعة",
+        "speed_status": "اضغط على الزر لاختبار سرعة الإنترنت.",
+        "internet_online": "الإنترنت متصل.",
+        "internet_online_no_speedtest": "الإنترنت متصل (speedtest-cli غير مثبت).",
+        "internet_offline": "الإنترنت غير متصل!",
+        "download_speed": "التنزيل:",
+        "upload_speed": "الرفع:",
+        "ping": "زمن الاستجابة:",
+        "testing_speed": "جاري اختبار السرعة...",
 
         # Hosts
         "ip": "IP",
@@ -119,6 +149,7 @@ translations = {
         "alert_type": "النوع",
         "message": "الرسالة",
         "no_alerts": "لا يوجد تنبيهات.",
+        "new_host_alert": "تم اكتشاف جهاز جديد",
 
         # DNS Blocks
         "domain": "النطاق",
@@ -135,5 +166,6 @@ translations = {
         "error": "خطأ",
         "permission_denied": "رفض الإذن. حاول باستخدام sudo.",
         "not_found": "غير موجود.",
+        "rate_limited": "كثير من الطلبات. حاول مرة أخرى لاحقًا."
     }
 }

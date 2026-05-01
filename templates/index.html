@@ -14,7 +14,10 @@
 
     <!-- Action Buttons -->
     <div class="mb-3" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-        <button onclick="scanHosts()" class="btn">{{ translations.scan_hosts }}</button>
+        <button onclick="scanHosts()" class="btn">
+            <span id="scan-spinner" class="loading-spinner" style="display: none;"></span>
+            {{ translations.scan_hosts }}
+        </button>
         <button onclick="runSetup()" class="btn">{{ translations.setup }}</button>
     </div>
 
@@ -52,6 +55,25 @@
             <h3>{{ translations.dns_blocks }}</h3>
             <p class="text-center">{{ dns_blocks|length if dns_blocks else translations.no_blocks }}</p>
         </div>
+    </div>
+</div>
+
+<!-- Speed Test Section -->
+<div class="card">
+    <h2>{{ translations.speed_test }}</h2>
+    <p>{{ translations.speed_status }}</p>
+    <button onclick="testSpeed()" class="btn">
+        <span id="speed-spinner" class="loading-spinner" style="display: none;"></span>
+        {{ translations.test_speed }}
+    </button>
+    <div id="speed-result" class="mt-2"></div>
+</div>
+
+<!-- Traffic Chart Section -->
+<div class="card">
+    <h2>{{ translations.traffic_monitoring }}</h2>
+    <div class="chart-container">
+        <canvas id="trafficChart"></canvas>
     </div>
 </div>
 
@@ -131,7 +153,7 @@
         </thead>
         <tbody>
             {% for alert in alerts %}
-            <tr>
+            <tr class="alert-{{ alert.alert_type }}">
                 <td>{{ alert.alert_type }}</td>
                 <td>{{ alert.message }}</td>
                 <td>{{ alert.ip }}</td>
@@ -175,6 +197,9 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Load Chart.js script -->
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+
 <script>
     // Fetch setup status
     fetch('/api/setup', {
@@ -196,13 +221,23 @@
 
     // Scan hosts
     function scanHosts() {
+        const spinner = document.getElementById('scan-spinner');
+        spinner.style.display = 'inline-block';
         fetch('/api/scan_hosts', {
             method: 'POST',
             headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
         })
         .then(response => response.json())
-        .then(data => { alert(data.message); location.reload(); })
-        .catch(error => { alert('{{ translations.error }}: ' + error); });
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => {
+            alert('{{ translations.error }}: ' + error);
+        })
+        .finally(() => {
+            spinner.style.display = 'none';
+        });
     }
 
     // Run setup
@@ -212,8 +247,59 @@
             headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
         })
         .then(response => response.json())
-        .then(data => { alert(data.message); location.reload(); })
-        .catch(error => { alert('{{ translations.error }}: ' + error); });
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => {
+            alert('{{ translations.error }}: ' + error);
+        });
     }
+
+    // Test speed
+    function testSpeed() {
+        const spinner = document.getElementById('speed-spinner');
+        const resultDiv = document.getElementById('speed-result');
+        spinner.style.display = 'inline-block';
+        resultDiv.innerHTML = '<p>{{ translations.testing_speed }}</p>';
+        fetch('/api/speedtest', {
+            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+        })
+        .then(response => response.json())
+        .then(data => {
+            let resultHTML = `<p>${data.message}</p>`;
+            if (data.speed) {
+                resultHTML += `<p>{{ translations.ping }}: ${data.speed.Ping || 'N/A'}</p>`;
+                resultHTML += `<p>{{ translations.download_speed }}: ${data.speed.Download || 'N/A'}</p>`;
+                resultHTML += `<p>{{ translations.upload_speed }}: ${data.speed.Upload || 'N/A'}</p>`;
+            }
+            resultDiv.innerHTML = resultHTML;
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `<p class="alert alert-error">{{ translations.error }}: ${error}</p>`;
+        })
+        .finally(() => {
+            spinner.style.display = 'none';
+        });
+    }
+
+    // Auto-refresh hosts and traffic every 30 seconds
+    setInterval(() => {
+        fetch('/api/hosts', {
+            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Hosts updated:", data);
+        });
+
+        fetch('/api/traffic', {
+            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Traffic updated:", data);
+        });
+    }, 30000);  // 30 seconds
 </script>
 {% endblock %}
