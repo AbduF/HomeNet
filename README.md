@@ -50,9 +50,6 @@ Step 2: Set Up a Virtual Environment✅
 python3 -m venv venv
 
 source venv/bin/activate  
-# On Windows: `venv\Scripts\activate
-
-
 
 Step 3: Install Dependencies✅
 
@@ -80,8 +77,6 @@ sudo ufw status
 
 You should see 5000 listed as allowed.
 
-
-
 Step 5: Run HomeNet✅
 
 python app.py
@@ -91,9 +86,7 @@ You should see:
  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
 
 
-
 Step 6: Access the Dashboard from Another PC✅
-
 
 
 Find your Raspberry Pi's IP address:
@@ -103,7 +96,6 @@ Find your Raspberry Pi's IP address:
  Example output: 192.168.1.100
 
 
-
 Open a web browser on another PC (on the same network) and navigate to:✅
 
  http://<raspberry-pi-ip>:5000/
@@ -111,13 +103,10 @@ Open a web browser on another PC (on the same network) and navigate to:✅
  Replace <raspberry-pi-ip> with the IP address from step 1 (e.g., http://192.168.1.100:5000/).
 
 
-
 Log in using the default credentials✨:✅
 
 
 Username: admin
-
-
 
 Password: 123456 (or the password you configured in .env).
 
@@ -127,21 +116,23 @@ Password: 123456 (or the password you configured in .env).
 
 ✨🔍 Troubleshooting Access Issues
 
-1. Can't Connect to the App?
-
+1✨. Can't Connect to the App?
 
 
 Check if the app is running✅
+
 Run ps aux | grep python to confirm the Flask process is active.
 
 
 
 Check the IP address✅
+
 Run hostname -I on your Raspberry Pi to find its IP address.
 
 
 
 Check the firewall✅
+
 Ensure your firewall allows traffic on port 5000:
 
 sudo ufw status
@@ -153,11 +144,11 @@ sudo ufw allow 5000
 
 
 Check the network✅
+
 Ensure your computer and Raspberry Pi are on the same network.
 
 
-
-2. Port Already in Use?
+2✨. Port Already in Use?
 
 If you see an error like:
 
@@ -175,7 +166,7 @@ Replace <PID> with the process ID from the lsof output.
 
 
 
-3. Alternative: Use iptables Directly
+3✨. Alternative: Use iptables Directly
 
 If ufw is not available, use iptables to allow port 5000:
 
