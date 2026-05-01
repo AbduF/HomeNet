@@ -30,20 +30,20 @@ Proudly developed in the UAE 🇦🇪
 
 ---
 
-### **Step 1: Clone the Repository**
+### **Step 1: Clone the Repository✅**
 ```bash
 git clone https://github.com/AbduF/HomeNet.git
 cd HomeNet
 
-### **Step 2: Set Up a Virtual Environment**
+### **Step 2: Set Up a Virtual Environment✅**
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: `venv\Scripts\activate
 
-### **Step 3:  Install Dependencies**
+### **Step 3:  Install Dependencies✅**
 ```bash
 pip install -r requirements.txt
 
-### **Step 4:  Run HomeNet App**
+### **Step 4:  Run HomeNet App✅**
 ```bash
 python app.py
