@@ -1,4 +1,4 @@
-cat > README.md << 'EOF'
+
 # HomeNet 🏡
 **Free, Open-Source Internet Control for Families**
 Proudly developed in the UAE 🇦🇪
@@ -21,12 +21,9 @@ Proudly developed in the UAE 🇦🇪
 
 ---
 
-📥 Installation (4 Steps)
+📥 Installation (6 Steps)✨
 
 Prerequisites
-
-
-
 
 
 Raspberry Pi 3/4 or Linux laptop (Debian/Ubuntu).
@@ -39,7 +36,7 @@ Python 3.6+.
 
 sudo access.
 
-
+---
 
 Step 1: Clone the Repository✅
 
@@ -97,8 +94,6 @@ Step 6: Access the Dashboard from Another PC✅
 
 
 
-
-
 Find your Raspberry Pi's IP address:
 
  hostname -I
@@ -115,10 +110,7 @@ Open a web browser on another PC (on the same network) and navigate to:
 
 
 
-Log in using the default credentials:✅
-
-
-
+Log in using the default credentials✨:✅
 
 
 Username: admin
@@ -128,14 +120,12 @@ Username: admin
 Password: 123456 (or the password you configured in .env).
 
 
+---
 
 
-
-🔍 Troubleshooting Access Issues
+✨🔍 Troubleshooting Access Issues
 
 1. Can't Connect to the App?
-
-
 
 
 
@@ -160,7 +150,7 @@ sudo ufw allow 5000
 
 
 
-Check the network:
+Check the network✨:
 Ensure your computer and Raspberry Pi are on the same network.
 
 
@@ -194,124 +184,6 @@ To make the rule persistent:
 sudo apt install iptables-persistent -y
 sudo netfilter-persistent save
 
+---
 
-
-
-
-📌 Summary
-
-
-
-
-
-
-
-Step
-
-
-
-Action
-
-
-
-Command/URL
-
-
-
-
-
-1
-
-
-
-Clone the repository
-
-
-
-git clone https://github.com/AbduF/HomeNet.git
-
-
-
-
-
-2
-
-
-
-Set up virtual environment
-
-
-
-python3 -m venv venv and source venv/bin/activate
-
-
-
-
-
-3
-
-
-
-Install dependencies
-
-
-
-pip install -r requirements.txt
-
-
-
-
-
-4
-
-
-
-Install and enable firewall
-
-
-
-sudo apt install ufw -y, sudo ufw enable, sudo ufw allow 5000
-
-
-
-
-
-5
-
-
-
-Run the app
-
-
-
-python app.py
-
-
-
-
-
-6
-
-
-
-Access the dashboard
-
-
-
-http://<raspberry-pi-ip>:5000/
-
-
-
-
-
-7
-
-
-
-Log in
-
-
-
-Username: admin, Password: 123456
-
-python app.py
+Email to abdalfaqeeh@gmail.com if you have any feedback and comments 
