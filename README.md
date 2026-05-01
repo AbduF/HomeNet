@@ -21,7 +21,7 @@ Proudly developed in the UAE 🇦🇪
 
 ---
 
-## **📥 Installation (3 Steps)**
+## **📥 Installation (4 Steps)**
 
 ### **Prerequisites**
 - **Raspberry Pi 3/4** or **Linux laptop** (Debian/Ubuntu).
@@ -36,11 +36,14 @@ git clone https://github.com/AbduF/HomeNet.git
 cd HomeNet
 
 ### **Step 2: Set Up a Virtual Environment**
+```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: `venv\Scripts\activate
 
 ### **Step 3:  Install Dependencies**
+```bash
 pip install -r requirements.txt
 
 ### **Step 4:  Run HomeNet App**
+```bash
 python app.py
