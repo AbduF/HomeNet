@@ -18,7 +18,14 @@
             <span id="scan-spinner" class="loading-spinner" style="display: none;"></span>
             {{ translations.scan_hosts }}
         </button>
-        <button onclick="runSetup()" class="btn">{{ translations.setup }}</button>
+        <button onclick="runSetup()" class="btn">
+            <span id="setup-spinner" class="loading-spinner" style="display: none;"></span>
+            {{ translations.setup }}
+        </button>
+        <button onclick="testSpeed()" class="btn">
+            <span id="speed-spinner" class="loading-spinner" style="display: none;"></span>
+            {{ translations.test_speed }}
+        </button>
     </div>
 
     <!-- Quick Stats Grid -->
@@ -62,10 +69,6 @@
 <div class="card">
     <h2>{{ translations.speed_test }}</h2>
     <p>{{ translations.speed_status }}</p>
-    <button onclick="testSpeed()" class="btn">
-        <span id="speed-spinner" class="loading-spinner" style="display: none;"></span>
-        {{ translations.test_speed }}
-    </button>
     <div id="speed-result" class="mt-2"></div>
 </div>
 
@@ -201,23 +204,44 @@
 <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
 
 <script>
-    // Fetch setup status
-    fetch('/api/setup', {
-        method: 'POST',
-        headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const dnsStatus = document.getElementById('dns-status');
-        const dnsStatusText = document.getElementById('dns-status-text');
-        dnsStatus.className = `status-indicator ${data.dns === 'success' ? 'status-success' : 'status-failed'}`;
-        dnsStatusText.textContent = data.dns === 'success' ? '{{ translations.firewall_enabled }}' : '{{ translations.firewall_disabled }}';
+    // --- Fixed JavaScript Functions ---
 
-        const firewallStatus = document.getElementById('firewall-status');
-        const firewallStatusText = document.getElementById('firewall-status-text');
-        firewallStatus.className = `status-indicator ${data.firewall === 'success' ? 'status-success' : 'status-failed'}`;
-        firewallStatusText.textContent = data.firewall === 'success' ? '{{ translations.firewall_enabled }}' : '{{ translations.firewall_disabled }}';
+    // Fetch setup status on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchSetupStatus();
+        updateTrafficChart(); // Initialize chart
     });
+
+    function fetchSetupStatus() {
+        fetch('/api/setup', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:123456'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const dnsStatus = document.getElementById('dns-status');
+            const dnsStatusText = document.getElementById('dns-status-text');
+            dnsStatus.className = `status-indicator ${data.dns === 'success' ? 'status-success' : 'status-failed'}`;
+            dnsStatusText.textContent = data.dns === 'success' ? '{{ translations.firewall_enabled }}' : '{{ translations.firewall_disabled }}';
+
+            const firewallStatus = document.getElementById('firewall-status');
+            const firewallStatusText = document.getElementById('firewall-status-text');
+            firewallStatus.className = `status-indicator ${data.firewall === 'success' ? 'status-success' : 'status-failed'}`;
+            firewallStatusText.textContent = data.firewall === 'success' ? '{{ translations.firewall_enabled }}' : '{{ translations.firewall_disabled }}';
+        })
+        .catch(error => {
+            console.error('Error fetching setup status:', error);
+            alert('{{ translations.error }}: ' + error.message);
+        });
+    }
 
     // Scan hosts
     function scanHosts() {
@@ -225,15 +249,24 @@
         spinner.style.display = 'inline-block';
         fetch('/api/scan_hosts', {
             method: 'POST',
-            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:123456'),
+                'Content-Type': 'application/json'
+            }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             location.reload();
         })
         .catch(error => {
-            alert('{{ translations.error }}: ' + error);
+            console.error('Error scanning hosts:', error);
+            alert('{{ translations.error }}: ' + error.message);
         })
         .finally(() => {
             spinner.style.display = 'none';
@@ -242,17 +275,31 @@
 
     // Run setup
     function runSetup() {
+        const spinner = document.getElementById('setup-spinner');
+        spinner.style.display = 'inline-block';
         fetch('/api/setup', {
             method: 'POST',
-            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:123456'),
+                'Content-Type': 'application/json'
+            }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             location.reload();
         })
         .catch(error => {
-            alert('{{ translations.error }}: ' + error);
+            console.error('Error running setup:', error);
+            alert('{{ translations.error }}: ' + error.message);
+        })
+        .finally(() => {
+            spinner.style.display = 'none';
         });
     }
 
@@ -263,9 +310,16 @@
         spinner.style.display = 'inline-block';
         resultDiv.innerHTML = '<p>{{ translations.testing_speed }}</p>';
         fetch('/api/speedtest', {
-            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:123456')
+            }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             let resultHTML = `<p>${data.message}</p>`;
             if (data.speed) {
@@ -276,7 +330,8 @@
             resultDiv.innerHTML = resultHTML;
         })
         .catch(error => {
-            resultDiv.innerHTML = `<p class="alert alert-error">{{ translations.error }}: ${error}</p>`;
+            console.error('Error testing speed:', error);
+            resultDiv.innerHTML = `<p class="alert alert-error">{{ translations.error }}: ${error.message}</p>`;
         })
         .finally(() => {
             spinner.style.display = 'none';
@@ -286,20 +341,19 @@
     // Auto-refresh hosts and traffic every 30 seconds
     setInterval(() => {
         fetch('/api/hosts', {
-            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:123456')
+            }
         })
         .then(response => response.json())
         .then(data => {
             console.log("Hosts updated:", data);
+        })
+        .catch(error => {
+            console.error('Error fetching hosts:', error);
         });
 
-        fetch('/api/traffic', {
-            headers: { 'Authorization': 'Basic ' + btoa('admin:123456') }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Traffic updated:", data);
-        });
+        updateTrafficChart();
     }, 30000);  // 30 seconds
 </script>
 {% endblock %}

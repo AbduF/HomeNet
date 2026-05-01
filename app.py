@@ -11,40 +11,41 @@ from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 import translations
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)  # Random secret key if not set
-CORS(app, resources={r"/*": {"origins": "*"}})
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 auth = HTTPBasicAuth()
 
 # Session configuration for security
 app.config.update(
-    SESSION_COOKIE_SECURE=True,      # Only send cookies over HTTPS
-    SESSION_COOKIE_HTTPONLY=True,     # Prevent JavaScript cookie access
-    SESSION_COOKIE_SAMESITE='Lax',    # CSRF protection
-    PERMANENT_SESSION_LIFETIME=1800   # 30-minute session timeout
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=1800
 )
 
 # Database path
 DB_PATH = os.path.join(os.path.dirname(__file__), 'homenet.db')
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
-# Logging configuration (errors only for performance)
+# Logging configuration
 log_handler = RotatingFileHandler(
     'homenet.log',
-    maxBytes=1024 * 1024,  # 1 MB
+    maxBytes=1024 * 1024,
     backupCount=5,
     encoding='utf-8'
 )
 log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logging.getLogger().addHandler(log_handler)
-logging.getLogger().setLevel(logging.ERROR)  # Only log errors in production
+logging.getLogger().setLevel(logging.ERROR)
 
-# Basic Auth Users (from environment variables)
+# Basic Auth Users
 users = {
     os.environ.get('ADMIN_USER', 'admin'): generate_password_hash(os.environ.get('ADMIN_PASSWORD', os.urandom(12).hex()))
 }
@@ -59,18 +60,16 @@ def before_request():
     g.lang = request.args.get('lang', 'en')
     session.permanent = True
 
-last_scan_time = 0  # Cooldown for host scanning
+last_scan_time = 0
 
-# --- Database Setup (Optimized for SQLite WAL Mode) ---
+# --- Database Setup ---
 def init_db():
-    """Initialize the SQLite database with WAL mode for better performance."""
     conn = sqlite3.connect(DB_PATH, isolation_level=None)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA foreign_keys=ON")
     cursor = conn.cursor()
 
-    # Create tables
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS hosts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,7 +111,6 @@ def init_db():
         )
     ''')
 
-    # Add indexes for performance
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_hosts_ip ON hosts(ip)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_hosts_mac ON hosts(mac)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_host_id ON traffic(host_id)")
@@ -127,7 +125,6 @@ init_db()
 
 # --- Helper Functions ---
 def db_query(query, args=(), one=False):
-    """Execute a database query with WAL mode and parameterized queries."""
     conn = sqlite3.connect(DB_PATH, isolation_level=None)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.row_factory = sqlite3.Row
@@ -139,7 +136,6 @@ def db_query(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 def is_valid_ip(ip):
-    """Validate an IP address."""
     try:
         import ipaddress
         ipaddress.ip_address(ip)
@@ -148,17 +144,9 @@ def is_valid_ip(ip):
         return False
 
 def is_valid_mac(mac):
-    """Validate a MAC address."""
     return re.match(r'^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$', mac) is not None
 
-def sanitize_input(input_str):
-    """Sanitize user input to prevent XSS and SQL injection."""
-    if input_str is None:
-        return None
-    return str(input_str).replace("'", "''").replace("<", "&lt;").replace(">", "&gt;")
-
 def get_active_network_interface():
-    """Detect the active network interface (eth0 or wlan0)."""
     try:
         result = subprocess.run(['ip', '-o', 'link', 'show'], capture_output=True, text=True, check=True)
         for line in result.stdout.split('\n'):
@@ -171,11 +159,18 @@ def get_active_network_interface():
     except subprocess.CalledProcessError:
         return None
 
+def stop_conflicting_dns_services():
+    try:
+        subprocess.run(['systemctl', 'is-active', 'systemd-resolved'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(['sudo', 'systemctl', 'stop', 'systemd-resolved'], check=False)
+        subprocess.run(['sudo', 'systemctl', 'disable', 'systemd-resolved'], check=False)
+    except Exception as e:
+        logging.warning(f"Could not stop systemd-resolved: {e}")
+
 def get_connected_hosts():
-    """Scan the local network for connected devices using arp-scan with cooldown."""
     global last_scan_time
     current_time = time.time()
-    if current_time - last_scan_time < 300:  # 5 minutes cooldown
+    if current_time - last_scan_time < 300:
         return []
     last_scan_time = current_time
 
@@ -212,38 +207,15 @@ def get_connected_hosts():
         return []
 
 def load_blocklists():
-    """Load blocklists from hardcoded defaults."""
     return {
-        'social_media': [
-            'facebook.com', 'twitter.com', 'instagram.com', 'tiktok.com',
-            'snapchat.com', 'linkedin.com', 'pinterest.com', 'reddit.com'
-        ],
-        'gaming': [
-            'steamcommunity.com', 'xbox.com', 'playstation.com', 'epicgames.com',
-            'roblox.com', 'blizzard.com', 'origin.com'
-        ],
-        'adult': [
-            'pornhub.com', 'xvideos.com', 'xhamster.com', 'youporn.com'
-        ]
+        'social_media': ['facebook.com', 'twitter.com', 'instagram.com', 'tiktok.com', 'snapchat.com', 'linkedin.com'],
+        'gaming': ['steamcommunity.com', 'xbox.com', 'playstation.com', 'epicgames.com', 'roblox.com'],
+        'adult': ['pornhub.com', 'xvideos.com', 'xhamster.com']
     }
 
-def stop_conflicting_dns_services():
-    """Stop services that may conflict with dnsmasq (e.g., systemd-resolved)."""
-    try:
-        # Check if systemd-resolved is running
-        subprocess.run(['systemctl', 'is-active', 'systemd-resolved'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        subprocess.run(['sudo', 'systemctl', 'stop', 'systemd-resolved'], check=False)
-        subprocess.run(['sudo', 'systemctl', 'disable', 'systemd-resolved'], check=False)
-    except Exception as e:
-        logging.warning(f"Could not stop systemd-resolved: {e}")
-
 def setup_dns_blocking():
-    """Set up DNS blocking using dnsmasq with optimized settings and error handling."""
     try:
-        # Stop conflicting services
         stop_conflicting_dns_services()
-
-        # Check if dnsmasq is installed
         subprocess.run(['which', 'dnsmasq'], check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
         try:
@@ -257,10 +229,9 @@ def setup_dns_blocking():
         os.makedirs(tmp_dir, exist_ok=True)
         subprocess.run(['sudo', 'cp', '/etc/dnsmasq.conf', '/etc/dnsmasq.conf.bak'], check=True)
 
-        # Get the correct network interface and IP
         active_interface = get_active_network_interface()
         if not active_interface:
-            logging.error("No active network interface found (eth0 or wlan0).")
+            logging.error("No active network interface found.")
             return False
 
         ip = subprocess.run(['hostname', '-I'], capture_output=True, text=True).stdout.strip().split()[0]
@@ -268,7 +239,6 @@ def setup_dns_blocking():
             logging.error("Could not determine IP address.")
             return False
 
-        # Fixed dnsmasq config with no-resolv and no-poll
         dnsmasq_conf = f"""# HomeNet DNS Configuration
 no-resolv
 no-poll
@@ -294,67 +264,48 @@ log-facility=/var/log/dnsmasq.log
                     f.write(f"address=/{domain}/0.0.0.0\n")
         subprocess.run(['sudo', 'cp', os.path.join(tmp_dir, 'blocklists.conf'), '/etc/dnsmasq.d/blocklists.conf'], check=True)
 
-        # Restart dnsmasq and check status
         subprocess.run(['sudo', 'systemctl', 'restart', 'dnsmasq'], check=True)
-        time.sleep(2)  # Wait for service to restart
+        time.sleep(2)
         status = subprocess.run(['sudo', 'systemctl', 'is-active', 'dnsmasq'], capture_output=True, text=True)
         if status.stdout.strip() != 'active':
             logging.error("dnsmasq failed to start. Check logs with: journalctl -xeu dnsmasq.service")
-            # Try to get more details
-            logs = subprocess.run(['sudo', 'journalctl', '-xeu', 'dnsmasq.service'], capture_output=True, text=True)
-            logging.error(f"dnsmasq logs: {logs.stderr}")
             return False
 
         subprocess.run(['sudo', 'systemctl', 'enable', 'dnsmasq'], check=True)
-        logging.info("DNS blocking setup completed successfully.")
         return True
     except subprocess.CalledProcessError as e:
         logging.error(f"DNS setup failed: {e.stderr}")
         return False
 
 def setup_firewall():
-    """Set up time-based firewall rules with optimized iptables."""
     try:
         if os.geteuid() != 0:
             logging.error("Firewall setup requires root privileges.")
             return False
 
-        # Flush existing rules
         subprocess.run(['iptables', '-F'], check=True)
         subprocess.run(['iptables', '-X'], check=True)
-
-        # Allow loopback and established connections
         subprocess.run(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'INPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], check=True)
-
-        # Allow essential services
-        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'], check=True)  # DNS
-        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'], check=True)  # DNS
-        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '80', '-j', 'ACCEPT'], check=True)  # HTTP
-        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '443', '-j', 'ACCEPT'], check=True)  # HTTPS
-        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'icmp', '-j', 'ACCEPT'], check=True)  # Ping
-
-        # Allow local network traffic
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '80', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'tcp', '--dport', '443', '-j', 'ACCEPT'], check=True)
+        subprocess.run(['iptables', '-A', 'OUTPUT', '-p', 'icmp', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '192.168.0.0/16', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '10.0.0.0/8', '-j', 'ACCEPT'], check=True)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-d', '172.16.0.0/12', '-j', 'ACCEPT'], check=True)
-
-        # Block all traffic after 10 PM (22:00) until 12 AM (00:00)
         subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'DROP'], check=True)
-
-        # Log blocked traffic
         subprocess.run(['iptables', '-A', 'OUTPUT', '-m', 'time', '--timestart', '22:00', '--timestop', '00:00', '-j', 'LOG', '--log-prefix', 'HOMENET BLOCKED: '], check=True)
 
-        # Save rules permanently
         try:
             subprocess.run(['apt', 'install', '-y', 'iptables-persistent'], check=True)
             subprocess.run(['netfilter-persistent', 'save'], check=True)
         except subprocess.CalledProcessError as e:
             logging.warning(f"Could not save iptables rules permanently: {e.stderr}")
 
-        logging.info("Firewall setup completed successfully.")
         return True
     except subprocess.CalledProcessError as e:
         logging.error(f"Firewall setup failed: {e.stderr}")
@@ -364,7 +315,6 @@ def setup_firewall():
 @app.route('/')
 @auth.login_required
 def dashboard():
-    """Render the dashboard with limited data for performance."""
     hosts = db_query("SELECT * FROM hosts ORDER BY last_seen DESC LIMIT 100")
     traffic = db_query('''
         SELECT h.ip, h.hostname, t.timestamp, t.bytes_sent, t.bytes_received
@@ -398,12 +348,10 @@ def dashboard():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Render the login page with rate limiting."""
     if request.method == 'POST':
-        username = sanitize_input(request.form.get('username', '').strip())
+        username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
 
-        # Basic rate limiting (in-memory)
         if not hasattr(g, 'login_attempts'):
             g.login_attempts = 0
         g.login_attempts += 1
@@ -420,14 +368,12 @@ def login():
 
 @app.route('/logout')
 def logout():
-    """Logout and redirect to login."""
     session.clear()
     return redirect(url_for('login'))
 
 @app.route('/api/hosts')
 @auth.login_required
 def get_hosts():
-    """Get all connected hosts with pagination."""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = 50
@@ -440,17 +386,14 @@ def get_hosts():
 @app.route('/api/traffic')
 @auth.login_required
 def get_traffic():
-    """Get traffic data with pagination."""
     try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 50
-        offset = (page - 1) * per_page
+        limit = request.args.get('limit', 100, type=int)
         traffic = db_query(f'''
             SELECT h.ip, h.hostname, t.timestamp, t.bytes_sent, t.bytes_received
             FROM traffic t
             JOIN hosts h ON t.host_id = h.id
             ORDER BY t.timestamp DESC
-            LIMIT {per_page} OFFSET {offset}
+            LIMIT {limit}
         ''')
         return jsonify([dict(row) for row in traffic])
     except Exception as e:
@@ -459,7 +402,6 @@ def get_traffic():
 @app.route('/api/alerts')
 @auth.login_required
 def get_alerts():
-    """Get alerts with pagination."""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = 50
@@ -478,7 +420,6 @@ def get_alerts():
 @app.route('/api/dns_blocks')
 @auth.login_required
 def get_dns_blocks():
-    """Get DNS blocks with pagination."""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = 50
@@ -497,7 +438,6 @@ def get_dns_blocks():
 @app.route('/api/scan_hosts', methods=['POST'])
 @auth.login_required
 def scan_hosts():
-    """Scan the network for connected hosts with cooldown."""
     try:
         hosts = get_connected_hosts()
         for host in hosts:
@@ -511,20 +451,19 @@ def scan_hosts():
                     "INSERT INTO hosts (ip, mac, hostname, os, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)",
                     (host['ip'], host['mac'], host.get('hostname', ''), host.get('os', ''), datetime.now().isoformat(), datetime.now().isoformat())
                 )
-                # Log new host alert
                 new_host_id = db_query("SELECT id FROM hosts WHERE ip = ?", (host['ip'],), one=True)['id']
                 db_query(
                     "INSERT INTO alerts (host_id, alert_type, message, timestamp) VALUES (?, ?, ?, ?)",
                     (new_host_id, 'new_host', f"New host detected: {host['ip']}", datetime.now().isoformat())
                 )
-        return jsonify({'message': f"{translations.translations[g.lang]['scan_hosts']} {len(hosts)} {translations.translations[g.lang]['hosts']}"}), 200
+        return jsonify({'message': f"Found {len(hosts)} hosts"}), 200
     except Exception as e:
+        logging.error(f"Error in scan_hosts: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/setup', methods=['POST'])
 @auth.login_required
 def api_setup():
-    """Set up DNS and firewall via API."""
     try:
         dns_success = setup_dns_blocking()
         firewall_success = setup_firewall()
@@ -535,11 +474,41 @@ def api_setup():
             'message': message
         }), 200 if (dns_success and firewall_success) else 500
     except Exception as e:
+        logging.error(f"Error in api_setup: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/speedtest')
+@auth.login_required
+def speedtest():
+    try:
+        subprocess.run(['ping', '-c', '1', '8.8.8.8'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            result = subprocess.run(['speedtest-cli', '--simple'], capture_output=True, text=True, check=True)
+            speed_data = {}
+            for line in result.stdout.split('\n'):
+                if ':' in line:
+                    key, value = line.split(':')
+                    speed_data[key.strip()] = f"{value.strip()} Mbps"
+            return jsonify({
+                'status': 'online',
+                'speed': speed_data,
+                'message': translations.translations[g.lang]['internet_online']
+            }), 200
+        except FileNotFoundError:
+            return jsonify({
+                'status': 'online',
+                'speed': None,
+                'message': translations.translations[g.lang]['internet_online_no_speedtest']
+            }), 200
+    except subprocess.CalledProcessError:
+        return jsonify({
+            'status': 'offline',
+            'speed': None,
+            'message': translations.translations[g.lang]['internet_offline']
+        }), 503
 
 @app.route('/health')
 def health():
-    """Health check endpoint."""
     return jsonify({'status': 'healthy'})
 
 # Static files
@@ -547,23 +516,4 @@ app.static_folder = 'static'
 app.static_url_path = '/static'
 
 if __name__ == '__main__':
-  app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
-
-  # Add this to your existing app.py (after the /api/speedtest endpoint)
-
-@app.route('/api/traffic')
-@auth.login_required
-def get_traffic():
-    """Get traffic data with pagination and limit for charts."""
-    try:
-        limit = request.args.get('limit', 100, type=int)
-        traffic = db_query(f'''
-            SELECT h.ip, h.hostname, t.timestamp, t.bytes_sent, t.bytes_received
-            FROM traffic t
-            JOIN hosts h ON t.host_id = h.id
-            ORDER BY t.timestamp DESC
-            LIMIT {limit}
-        ''')
-        return jsonify([dict(row) for row in traffic])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

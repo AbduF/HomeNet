@@ -20,7 +20,7 @@ fi
 echo -e "${BLUE}Step 1: Updating system and installing dependencies...${NC}"
 apt update -y
 apt upgrade -y
-apt install -y python3-pip python3-venv ufw dnsmasq arp-scan iptables-persistent nginx certbot python3-certbot-nginx
+apt install -y python3-pip python3-venv ufw dnsmasq arp-scan iptables-persistent nginx certbot python3-certbot-nginx speedtest-cli
 
 # Step 2: Clone or navigate to HomeNet directory
 echo -e "${BLUE}Step 2: Setting up HomeNet directory...${NC}"
@@ -126,9 +126,10 @@ echo ""
 echo "To update:"
 echo "  cd /opt/HomeNet && git pull && sudo systemctl restart homenet"
 echo ""
-echo "To troubleshoot dnsmasq:"
-echo "  - Check status: sudo systemctl status dnsmasq"
+echo "To troubleshoot:"
+echo "  - Check dnsmasq: sudo systemctl status dnsmasq"
 echo "  - Check logs: sudo journalctl -xeu dnsmasq.service"
 echo "  - Test DNS: dig @localhost facebook.com"
+echo "  - Test speed: speedtest-cli --simple"
 echo "==========================================="
 echo -e "${NC}"
