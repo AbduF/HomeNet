@@ -1,23 +1,92 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="{{ 'ar' if translations.language == 'اللغة' else 'en' }}" dir="{{ 'rtl' if translations.language == 'اللغة' else 'ltr' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark light">
+<title>HomeNet — {{ translations.login }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Tajawal:wght@400;500;700&family=Syne:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/homenet.css">
+</head>
+<body class="login-page">
 
-{% block title %}{{ translations.login }} - HomeNet{% endblock %}
+<div class="login-grid">
+  <!-- Brand side -->
+  <div class="login-brand">
+    <div class="brand-visual">
+      <div class="orbit-ring ring-1"></div>
+      <div class="orbit-ring ring-2"></div>
+      <div class="orbit-ring ring-3"></div>
+      <div class="orbit-core">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <circle cx="18" cy="18" r="15" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+          <circle cx="18" cy="18" r="6" fill="currentColor"/>
+          <path d="M18 3 Q24 11 18 18 Q12 11 18 3Z" fill="currentColor" opacity="0.5"/>
+        </svg>
+      </div>
+    </div>
+    <h1 class="brand-title">HomeNet</h1>
+    <p class="brand-tagline">Parental Network Controller<br>🇦🇪 Proudly made in UAE</p>
+    <div class="brand-features">
+      <div class="feature-chip">⏱ Time-based blocking</div>
+      <div class="feature-chip">📡 DNS filtering</div>
+      <div class="feature-chip">🔍 Traffic monitoring</div>
+      <div class="feature-chip">🌐 EN / عربي</div>
+    </div>
+  </div>
 
-{% block content %}
-<div class="card" style="max-width: 400px; margin: 5rem auto;">
-    <h2 class="text-center mb-2">{{ translations.login }}</h2>
-    {% if error %}
-    <div class="alert alert-error mb-2">{{ error }}</div>
-    {% endif %}
-    <form method="POST" action="/login">
-        <div class="form-group">
-            <label for="username">{{ translations.username }}</label>
-            <input type="text" id="username" name="username" placeholder="{{ translations.username }}" required>
+  <!-- Login form side -->
+  <div class="login-form-side">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>{{ translations.login }}</h2>
+        <div class="lang-toggle compact">
+          <a href="?lang=en">EN</a> / <a href="?lang=ar">عربي</a>
         </div>
-        <div class="form-group">
-            <label for="password">{{ translations.password }}</label>
-            <input type="password" id="password" name="password" placeholder="{{ translations.password }}" required>
+      </div>
+
+      {% if error %}
+      <div class="error-banner">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v3M7 9.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login" autocomplete="on">
+        <div class="field-group">
+          <label for="username">{{ translations.username }}</label>
+          <div class="input-wrap">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input type="text" id="username" name="username" required autocomplete="username" placeholder="admin" autofocus>
+          </div>
         </div>
-        <button type="submit" class="btn w-100">{{ translations.submit }}</button>
-    </form>
+        <div class="field-group">
+          <label for="password">{{ translations.password }}</label>
+          <div class="input-wrap">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+            <button type="button" class="toggle-pw" onclick="togglePassword()">
+              <svg id="pwEyeIcon" width="14" height="14" viewBox="0 0 14 14" fill="none"><ellipse cx="7" cy="7" rx="5.5" ry="3" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-login">{{ translations.login }}</button>
+      </form>
+
+      <div class="login-footer-note">
+        <span class="mono muted small">HomeNet • Raspberry Pi 3/4</span>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
+
+<script>
+function togglePassword() {
+  const pw = document.getElementById('password');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+}
+</script>
+</body>
+</html>
