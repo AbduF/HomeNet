@@ -389,4 +389,147 @@ def get_hosts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app
+@app.route('/api/traffic')
+@auth.login_required
+def get_traffic():
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        traffic = db_query(f'''
+            SELECT h.ip, h.hostname, t.timestamp, t.bytes_sent, t.bytes_received
+            FROM traffic t
+            JOIN hosts h ON t.host_id = h.id
+            ORDER BY t.timestamp DESC
+            LIMIT {limit}
+        ''')
+        return jsonify([dict(row) for row in traffic])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/alerts')
+@auth.login_required
+def get_alerts():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 50
+        offset = (page - 1) * per_page
+        alerts = db_query(f'''
+            SELECT a.id, a.alert_type, a.message, a.timestamp, h.ip, h.hostname
+            FROM alerts a
+            JOIN hosts h ON a.host_id = h.id
+            ORDER BY a.timestamp DESC
+            LIMIT {per_page} OFFSET {offset}
+        ''')
+        return jsonify([dict(alert) for alert in alerts])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/dns_blocks')
+@auth.login_required
+def get_dns_blocks():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 50
+        offset = (page - 1) * per_page
+        blocks = db_query(f'''
+            SELECT d.domain, d.timestamp, h.ip, h.hostname
+            FROM dns_blocks d
+            JOIN hosts h ON d.host_id = h.id
+            ORDER BY d.timestamp DESC
+            LIMIT {per_page} OFFSET {offset}
+        ''')
+        return jsonify([dict(block) for block in blocks])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/scan_hosts', methods=['POST'])
+@auth.login_required
+def scan_hosts():
+    try:
+        hosts = get_connected_hosts()
+        for host in hosts:
+            existing_host = db_query(
+                "SELECT id FROM hosts WHERE ip = ? OR mac = ?",
+                (host['ip'], host['mac']),
+                one=True
+            )
+            if not existing_host:
+                db_query(
+                    "INSERT INTO hosts (ip, mac, hostname, os, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)",
+                    (host['ip'], host['mac'], host.get('hostname', ''), host.get('os', ''), datetime.now().isoformat(), datetime.now().isoformat())
+                )
+                new_host_id = db_query("SELECT id FROM hosts WHERE ip = ?", (host['ip'],), one=True)['id']
+                db_query(
+                    "INSERT INTO alerts (host_id, alert_type, message, timestamp) VALUES (?, ?, ?, ?)",
+                    (new_host_id, 'new_host', f"New host detected: {host['ip']}", datetime.now().isoformat())
+                )
+        return jsonify({'message': f"Found {len(hosts)} hosts"}), 200
+    except Exception as e:
+        logging.error(f"Error in scan_hosts: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/setup', methods=['POST'])
+@auth.login_required
+def api_setup():
+    try:
+        dns_success = setup_dns_blocking()
+        firewall_success = setup_firewall()
+        message = translations.translations[g.lang]['setup_success'] if (dns_success and firewall_success) else translations.translations[g.lang]['setup_failed']
+        return jsonify({
+            'dns': 'success' if dns_success else 'failed',
+            'firewall': 'success' if firewall_success else 'failed',
+            'message': message
+        }), 200 if (dns_success and firewall_success) else 500
+    except Exception as e:
+        logging.error(f"Error in api_setup: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/speedtest')
+@auth.login_required
+def speedtest():
+    try:
+        # Test availability (ping Google DNS)
+        subprocess.run(['ping', '-c', '1', '8.8.8.8'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Test download speed (using speedtest-cli)
+        try:
+            result = subprocess.run(['speedtest-cli', '--simple', '--timeout=10'],
+                                  capture_output=True, text=True, check=True, timeout=15)
+            speed_data = {}
+            for line in result.stdout.split('\n'):
+                if ':' in line:
+                    key, value = line.split(':')
+                    speed_data[key.strip()] = f"{value.strip()} Mbps"
+            return jsonify({
+                'status': 'online',
+                'speed': speed_data,
+                'message': translations.translations[g.lang]['internet_online']
+            }), 200
+        except FileNotFoundError:
+            return jsonify({
+                'status': 'online',
+                'speed': None,
+                'message': translations.translations[g.lang]['internet_online_no_speedtest']
+            }), 200
+        except subprocess.TimeoutExpired:
+            return jsonify({
+                'status': 'online',
+                'speed': None,
+                'message': translations.translations[g.lang]['internet_online_no_speedtest']
+            }), 200
+    except subprocess.CalledProcessError:
+        return jsonify({
+            'status': 'offline',
+            'speed': None,
+            'message': translations.translations[g.lang]['internet_offline']
+        }), 503
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'healthy'})
+
+# Static files
+app.static_folder = 'static'
+app.static_url_path = '/static'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
