@@ -45,9 +45,9 @@ log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(mess
 logging.getLogger().addHandler(log_handler)
 logging.getLogger().setLevel(logging.ERROR)
 
-# Basic Auth Users
+# Basic Auth Users (Default: admin/123456)
 users = {
-    os.environ.get('ADMIN_USER', 'admin'): generate_password_hash(os.environ.get('ADMIN_PASSWORD', os.urandom(12).hex()))
+    os.environ.get('ADMIN_USER', 'admin'): generate_password_hash(os.environ.get('ADMIN_PASSWORD', '123456'))
 }
 
 @auth.verify_password
@@ -111,6 +111,7 @@ def init_db():
         )
     ''')
 
+    # Indexes for performance
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_hosts_ip ON hosts(ip)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_hosts_mac ON hosts(mac)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_host_id ON traffic(host_id)")
@@ -147,6 +148,7 @@ def is_valid_mac(mac):
     return re.match(r'^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$', mac) is not None
 
 def get_active_network_interface():
+    """Detect active network interface (eth0, wlan0, etc.)"""
     try:
         result = subprocess.run(['ip', '-o', 'link', 'show'], capture_output=True, text=True, check=True)
         for line in result.stdout.split('\n'):
@@ -157,11 +159,12 @@ def get_active_network_interface():
                     return 'wlan0'
                 elif 'enp' in line:
                     return line.split()[1].replace(':', '')
-        return None
+        return 'eth0'  # Default fallback
     except subprocess.CalledProcessError:
-        return None
+        return 'eth0'  # Default fallback
 
 def stop_conflicting_dns_services():
+    """Stop services that may conflict with dnsmasq (e.g., systemd-resolved)"""
     try:
         result = subprocess.run(['systemctl', 'list-unit-files', 'systemd-resolved.service'],
                               capture_output=True, text=True)
@@ -172,6 +175,7 @@ def stop_conflicting_dns_services():
         logging.warning(f"Could not stop systemd-resolved: {e}")
 
 def get_connected_hosts():
+    """Scan the local network for connected devices using arp-scan with cooldown"""
     global last_scan_time
     current_time = time.time()
     if current_time - last_scan_time < 300:  # 5-minute cooldown
@@ -186,10 +190,6 @@ def get_connected_hosts():
 
     try:
         active_interface = get_active_network_interface()
-        if not active_interface:
-            logging.error("No active network interface found.")
-            return []
-
         result = subprocess.run(
             ['sudo', 'arp-scan', '--interface=' + active_interface, '--localnet', '--timeout=100'],
             capture_output=True,
@@ -211,6 +211,7 @@ def get_connected_hosts():
         return []
 
 def load_blocklists():
+    """Load blocklists from hardcoded defaults"""
     return {
         'social_media': ['facebook.com', 'twitter.com', 'instagram.com', 'tiktok.com', 'snapchat.com', 'linkedin.com'],
         'gaming': ['steamcommunity.com', 'xbox.com', 'playstation.com', 'epicgames.com', 'roblox.com'],
@@ -218,6 +219,7 @@ def load_blocklists():
     }
 
 def setup_dns_blocking():
+    """Set up DNS blocking using dnsmasq with optimized settings"""
     try:
         stop_conflicting_dns_services()
         subprocess.run(['which', 'dnsmasq'], check=True, stdout=subprocess.PIPE)
@@ -234,15 +236,12 @@ def setup_dns_blocking():
         subprocess.run(['sudo', 'cp', '/etc/dnsmasq.conf', '/etc/dnsmasq.conf.bak'], check=True)
 
         active_interface = get_active_network_interface()
-        if not active_interface:
-            logging.error("No active network interface found.")
-            return False
-
         ip = subprocess.run(['hostname', '-I'], capture_output=True, text=True).stdout.strip().split()[0]
         if not ip:
             logging.error("Could not determine IP address.")
             return False
 
+        # Fixed dnsmasq config (no deprecated options)
         dnsmasq_conf = f"""# HomeNet DNS Configuration
 no-resolv
 interface={active_interface}
@@ -284,6 +283,7 @@ log-facility=/var/log/dnsmasq.log
         return False
 
 def setup_firewall():
+    """Set up time-based firewall rules with optimized iptables"""
     try:
         if os.geteuid() != 0:
             logging.error("Firewall setup requires root privileges.")
@@ -402,42 +402,6 @@ def get_traffic():
             LIMIT {limit}
         ''')
         return jsonify([dict(row) for row in traffic])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/alerts')
-@auth.login_required
-def get_alerts():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 50
-        offset = (page - 1) * per_page
-        alerts = db_query(f'''
-            SELECT a.id, a.alert_type, a.message, a.timestamp, h.ip, h.hostname
-            FROM alerts a
-            JOIN hosts h ON a.host_id = h.id
-            ORDER BY a.timestamp DESC
-            LIMIT {per_page} OFFSET {offset}
-        ''')
-        return jsonify([dict(alert) for alert in alerts])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/dns_blocks')
-@auth.login_required
-def get_dns_blocks():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 50
-        offset = (page - 1) * per_page
-        blocks = db_query(f'''
-            SELECT d.domain, d.timestamp, h.ip, h.hostname
-            FROM dns_blocks d
-            JOIN hosts h ON d.host_id = h.id
-            ORDER BY d.timestamp DESC
-            LIMIT {per_page} OFFSET {offset}
-        ''')
-        return jsonify([dict(block) for block in blocks])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
