@@ -1,23 +1,2 @@
-# Core Framework
-Flask==3.0.3
-flask-cors==4.0.1
-flask-httpauth==4.8.0
-flask-wtf==1.2.1          # CSRF Protection
-flask-limiter==3.5.0      # Rate Limiting
-python-dotenv==1.0.1
-
-# Security & Hashing
-bcrypt==4.1.2             # Stronger password hashing
-cryptography==42.0.5      # For WebAuthn (future)
-
-# Server & Performance
-gunicorn==22.0.0
-waitress==2.1.2           # Windows fallback
-
-# Database & Utils
-python-dateutil==2.9.0
-requests==2.31.0
-
-# Optional: Real-time updates
-flask-socketio==5.3.6
-eventlet==0.35.2
+flask
+psutil
