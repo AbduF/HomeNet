@@ -1,6 +1,3 @@
-Here is the updated `README.md` file. I have added a dedicated **"Manual Installation"** section where your requested commands are placed, while keeping the **"Automated Installation"** (which handles the Systemd service automatically) as the recommended option.
-
-**Note:** I added a `chown` command after the venv creation. This is a **QA Best Practice**—creating a virtual environment with `sudo` can sometimes block your regular user from installing packages. The `chown` command ensures you have full control over the folder.
 
 ### `README.md`
 **Location:** `/home/home/HomeNet/README.md`
