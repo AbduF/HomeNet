@@ -31,13 +31,16 @@ Easy Deployment: One-command installation script for Raspberry Pi.
 🌟Network: Ethernet or Wi-Fi connection.
 
 🚀 Installation & Setup
+
 Follow these steps to get NetGuard running on your Raspberry Pi in minutes.
 
 🌟Step 1: Clone the Repository
 
 Open your terminal on the Raspberry Pi and run:
 
-git clone https://github.com/AbduF/HomeNet.gitcd HomeNet
+git clone https://github.com/AbduF/HomeNet.git
+
+cd HomeNet
 
 🌟Step 2: Run the Installer
 
@@ -46,6 +49,7 @@ The repository includes an automated script that installs all dependencies (Flas
 bash
 
 chmod +x install.sh
+
 sudo ./install.sh
 
 🌟Step 3: Access the Dashboard
@@ -66,13 +70,13 @@ Password: 123456
 
 🛠️ Usage
 
-Check Status: The top card shows if the network is "Active" or "Blocked" based on the time schedule.
+🛡️Check Status: The top card shows if the network is "Active" or "Blocked" based on the time schedule.
 
-Block Websites: Scroll to "Manual URL Blocking", type a domain (e.g., tiktok.com), and click Block.
+🛡️Block Websites: Scroll to "Manual URL Blocking", type a domain (e.g., tiktok.com), and click Block.
 
-Change Language: Click the "English / العربية" button in the top right corner.
+🛡️Change Language: Click the "English / العربية" button in the top right corner.
 
-Manage Security: Click "Change Password" to update your admin credentials.
+🛡️Manage Security: Click "Change Password" to update your admin credentials.
 
 📂 Project Structure
 text
@@ -90,12 +94,17 @@ HomeNet/
 Contributions, issues, and feature requests are welcome!
 
 Fork the repository.
+
 Create your feature branch (git checkout -b feature/AmazingFeature).
+
 Commit your changes (git commit -m 'Add some AmazingFeature').
+
 Push to the branch (git push origin feature/AmazingFeature).
+
 Open a Pull Request.
 
 📜 License
+
 This project is licensed under the MIT License.
 
 🌏 Acknowledgments
